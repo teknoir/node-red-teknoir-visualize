@@ -1,0 +1,29 @@
+{
+  "name": "devstudio-debug",
+  "version": "1.0.3",
+  "description": "Low-code programming for event-driven applications",
+  "homepage": "http://teknoir.ai",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tekn0ir/devstudio-docker.git"
+  },
+  "main": "node_modules/node-red/red/red.js",
+  "scripts": {
+    "start": "node_modules/.bin/nodemon --watch '../' $NODE_OPTIONS node_modules/node-red/red.js --userDir ./data",
+    "start_": "node $NODE_OPTIONS node_modules/node-red/red.js --userDir ./data"
+  },
+  "dependencies": {
+    "body-parser": "^1.19.0",
+    "node-red": "1.2.9",
+    "node-red-node-data-generator": "0.2.0",
+    "node-red-contrib-image-tools": "2.0.1",
+    "node-red-teknoir-visualize": "file:../",
+    "nodemon": "^2.0.12"
+  },
+  "engines": {
+    "node": ">=10"
+  },
+  "nodemonConfig": {
+    "ext": "js,html"
+  }
+}

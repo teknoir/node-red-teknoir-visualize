@@ -1,0 +1,154 @@
+<script type="text/html" data-template-name="bbox-overlay">
+    <div class="form-row">
+        <label for="node-input-strokeWidth" style="white-space:nowrap"><i class="fa fa-pencil" aria-hidden="true"></i>
+            Stroke Width</label>
+        <input type="text" id="node-input-strokeWidth" style="width:100px;" placeholder="strokeWidth">
+        <input type="hidden" id="node-input-stroke">
+        <label for="node-input-strokeWidth"> px</label>
+
+    </div>
+    <div class="form-row">
+        <label for="node-input-fontSize" style="white-space:nowrap"><i class="fa fa-font" aria-hidden="true"></i> Font
+            Size</label>
+        <input type="text" id="node-input-fontSize" style="width:100px;" placeholder="fontSize">
+        <input type="hidden" id="node-input-font">
+        <label for="node-input-fontSize"> px</label>
+    </div>
+    <div class="form-row">
+        <label for="node-input-objectsProp"><i class="fa fa-tag"></i> Objects</label>
+        <input type="text" id="node-input-objectsProp" placeholder="objectsProp">
+        <input type="hidden" id="node-input-objectsPropType">
+    </div>
+    <div class="form-row">
+        <label for="node-input-imageProp"><i class="fa fa-tag"></i> Image</label>
+        <input type="text" id="node-input-imageProp" placeholder="imageProp">
+        <input type="hidden" id="node-input-imagePropType">
+    </div>
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+</script>
+
+<script type="text/html" data-help-name="bbox-overlay">
+    <p>
+        Annotate the bouding boxes of detected objects into the original image.
+    </p>
+
+    <h3>Inputs</h3>
+    <dl class="message-properties">
+        <dt>payload
+            <span class="property-type">Object</span>
+        </dt>
+        <dd>
+            The payload shall contain two properties: <i>objects</i> and
+            <i>image</i>. The value of <i>objects</i> is an array of the
+            bounding box objects.
+            <pre>
+<code>
+{
+    image: mime encoded string or buffer,
+    objects: {
+      bbox: [x, y, x2, y2],
+      className: string,
+      score: number
+    }
+}
+</code>
+</pre>
+            The <i>Objects</i> property is used to specify where to
+            retrieve the <i>objects</i> information. The <i>Image</i>
+            property for <i>image</i> data.
+            <i>image</i> is an image in <i>String - MIME encoded</i> or <i>Buffer</i> data type.
+        </dd>
+    </dl>
+
+    <h3>Outputs</h3>
+    <dl class="message-properties">
+        <dt>payload
+            <span class="property-type">Buffer</span>
+        </dt>
+        <dd>
+            The annotated image in <i>Buffer</i> data type.
+        </dd>
+    </dl>
+
+    <h3>Details</h3>
+    <p><code>msg.payload</code> is the image and object detection results
+        containing the classes and bounding boxes information. Then this
+        node annotates the bounding boxes into the image. The image with
+        bounding boxes is sent to the next node as msg.payload.
+    </p>
+</script>
+<script type="text/html" data-template-name="bbox-overlay">
+    $("#node-input-example1").typedInput({
+    type:"str",
+    types:["str","num","bool"],
+    typeField: "#node-input-example1-type"
+    })
+</script>
+<script type="text/javascript">
+    RED.nodes.registerType('bbox-overlay', {
+        category: 'visualize',
+        color: '#F3B567',
+        defaults: {
+            strokeWidth: {value: '3', validate: RED.validators.number(), required: false},
+            fontSize: {value: '30', validate: RED.validators.number(), required: false},
+            objectsProp: {value: 'objects', required: false},
+            objectsPropType: {value: 'msgEvent'},
+            imageProp: {value: 'image', required: false},
+            imagePropType: {value: 'msgEvent'},
+            name: {value: ''}
+        },
+        inputs: 1,
+        outputs: 1,
+        icon: 'tn_dark.svg',
+        label: function () {
+            return this.name || 'bbox overlay';
+        },
+        oneditprepare: function () {
+            const msgPayload = {
+                value: "msgPayload",
+                label: "msg.payload."
+            };
+            const msgEvent = {
+                value: "msgEvent",
+                label: "msg.payload.event."
+            };
+            $("#node-input-fontSize").typedInput({
+                default: 'num',
+                typeField: $("#node-input-font"),
+                types: ['num']
+            });
+            $("#node-input-strokeWidth").typedInput({
+                default: 'num',
+                typeField: $("#node-input-stroke"),
+                types: ['num']
+            });
+            $("#node-input-objectsProp").typedInput({
+                default: 'msgPayload',
+                types: ['msg', msgPayload, msgEvent],
+                typeField: "#node-input-objectsPropType"
+            });
+            $("#node-input-imageProp").typedInput({
+                default: "msgPayload",
+                types: ['msg', msgPayload, msgEvent],
+                typeField: "#node-input-imagePropType"
+            });
+            if (!$("#node-input-strokeWidth").typedInput('value').length) {
+                $("#node-input-strokeWidth").typedInput('value', 2);
+            }
+            if (!$("#node-input-fontSize").typedInput('value').length) {
+                $("#node-input-fontSize").typedInput('value', 10);
+            }
+            if (!$("#node-input-objectsProp").typedInput('value').length) {
+                $("#node-input-objectsProp").typedInput('type', 'msgEvent');
+                $("#node-input-objectsProp").typedInput('value', 'objects');
+            }
+            if (!$("#node-input-imageProp").typedInput('value').length) {
+                $("#node-input-imageProp").typedInput('type', 'msgEvent');
+                $("#node-input-imageProp").typedInput('value', 'image');
+            }
+        }
+    });
+</script>

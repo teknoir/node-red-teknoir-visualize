@@ -1,0 +1,402 @@
+<script type="text/javascript">
+    Chart.register(ChartStreaming);
+
+    (function () {
+
+        const DEFAULT_CHART_WIDTH = 320;
+        const DEFAULT_CHART_HEIGHT = 160;
+        const DEFAULT_CHART_DURATION = 60000;
+        const DEFAULT_CHART_DELAY = 1000;
+
+        RED.nodes.registerType('graph-plot', {
+            category: 'visualize',
+            color: '#88A882',
+            defaults: {
+                name: {value: ""},
+                property: {
+                    value: "payload",
+                    required: true,
+                    validate: RED.validators.typedInput("fieldType")
+                },
+                fieldType: {value: "msg"},
+                width: {
+                    value: DEFAULT_CHART_WIDTH,
+                    required: true,
+                    validate: function (v) {
+                        return !v || !isNaN(parseInt(v, 10))
+                    }
+                },
+                height: {
+                    value: DEFAULT_CHART_HEIGHT,
+                    required: true,
+                    validate: function (v) {
+                        return !v || !isNaN(parseInt(v, 10))
+                    }
+                },
+                active: {value: true},
+                title: {value: false},
+                legend: {value: false},
+                hide: {value: true},
+                duration: {
+                    value: DEFAULT_CHART_DURATION,
+                    required: true,
+                    validate: function (v) {
+                        return !v || !isNaN(parseInt(v, 10))
+                    }
+                },
+                delay: {
+                    value: DEFAULT_CHART_DELAY,
+                    required: true,
+                    validate: function (v) {
+                        return !v || !isNaN(parseInt(v, 10))
+                    }
+                },
+                config: {
+                    required: true,
+                    value: {
+                        type: 'line',
+                        data: {
+                            datasets: []
+                        },
+                        options: {
+                            responsive: true,
+                            scales: {
+                                x: {
+                                    type: 'realtime',
+                                    realtime: {
+                                        duration: 60000
+                                    }
+                                }
+                            },
+                            tooltips: {
+                                mode: 'nearest',
+                                intersect: false
+                            },
+                            hover: {
+                                mode: 'nearest',
+                                intersect: false
+                            },
+                            plugins: {
+                                streaming: {
+                                    duration: 60000,
+                                    delay: 1000
+                                },
+                                legend: {
+                                    display: false,
+                                    position: 'bottom',
+                                },
+                                title: {
+                                    display: false,
+                                    text: 'graph plot'
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            inputs: 1,
+            outputs: 0,
+            icon: "tn_dark.svg",
+            align: 'right',
+            label: function () {
+                return this.name || "graph plot";
+            },
+            labelStyle: function () {
+                return this.name ? "node_label_italic" : "";
+            },
+            button: {
+                toggle: "active",
+                onclick: function () {
+                    const label = this.name || "graph plot";
+                    var node = this;
+                    $.ajax({
+                        url: `graph-plot/${this.id}/${this.active ? 'enable' : 'disable'}`,
+                        type: "POST",
+                        success: function (resp, textStatus, xhr) {
+                            const historyEvent = {
+                                t: 'edit',
+                                node: node,
+                                changes: {
+                                    active: !node.active
+                                },
+                                dirty: node.dirty,
+                                changed: node.changed
+                            };
+                            node.changed = true;
+                            node.dirty = true;
+                            RED.nodes.dirty(true);
+                            RED.history.push(historyEvent);
+                            RED.view.redraw();
+                            redraw(node);
+                            if (xhr.status == 200) {
+                                RED.notify("Successfully " + resp + ": " + label, "success");
+                            }
+                        },
+                        error: function (jqXHR, textStatus, errorThrown) {
+                            var message;
+
+                            switch (jqXHR.status) {
+                                case 404:
+                                    message = "node not deployed";
+                                    break;
+                                case 0:
+                                    message = "no response from server";
+                                    break;
+                                default:
+                                    message = `unexpected error (${textStatus}) ${errorThrown}`;
+                            }
+
+                            RED.notify(`<strong>Error</strong>: ${message}`, "error");
+                        }
+                    });
+                }
+            },
+            oneditprepare: function () {
+                var that = this;
+                $('#node-input-property').typedInput({
+                    default: 'msg',
+                    typeField: $("#node-input-fieldType"),
+                    types: ['msg']
+                });
+                $('#node-input-property').typedInput('value', this.property || 'payload');
+
+                if ($("#node-input-title").is(":checked")) {
+                    that.config.options.plugins.title.display = true;
+                    that.config.options.plugins.title.text = that.name;
+                }
+                $("#node-input-title").change(function () {
+                    if ($("#node-input-title").is(":checked")) {
+                        that.config.options.plugins.title.display = true;
+                        that.config.options.plugins.title.text = that.name;
+                    } else {
+                        that.config.options.plugins.title.display = false;
+                    }
+                });
+                if ($("#node-input-legend").is(":checked")) {
+                    that.config.options.plugins.legend.display = true;
+                }
+                $("#node-input-legend").change(function () {
+                    if ($("#node-input-legend").is(":checked")) {
+                        that.config.options.plugins.legend.display = true;
+                    } else {
+                        that.config.options.plugins.legend.display = false;
+                    }
+                });
+                $("#node-input-duration").change(function () {
+                    that.config.options.plugins.streaming.duration = $("#node-input-duration").val();
+                    that.config.options.scales.x.realtime.duration = that.config.options.plugins.streaming.duration;
+                });
+                $("#node-input-delay").change(function () {
+                    that.config.options.plugins.streaming.delay = $("#node-input-delay").val();
+                });
+            }
+        });
+
+        let chartColors = {
+            red: 'rgb(255, 99, 132)',
+            orange: 'rgb(255, 159, 64)',
+            yellow: 'rgb(255, 205, 86)',
+            green: 'rgb(75, 192, 192)',
+            blue: 'rgb(54, 162, 235)',
+            purple: 'rgb(153, 102, 255)',
+            grey: 'rgb(201, 203, 207)'
+        };
+
+        let remove = function(id) {
+            const $chart = document.getElementById(`graph-plot-output-chart-${id}`);
+            const $bubble = document.getElementById(`graph-plot-output-bubble-${id}`);
+            const $reset = document.getElementById(`graph-plot-output-reset-${id}`);
+
+            $chart && $chart.remove();
+            $bubble && $bubble.remove();
+            $reset && $reset.remove();
+        }
+
+        let color = Chart.helpers.color;
+
+        let redraw = function (node) {
+            let id = node.id
+            remove(id);
+            if (typeof node.config !== 'undefined' && node.config.data.datasets?.length && (node.active || !node.hide)) {
+                render(id, node);
+            }
+        }
+
+        let render = function (id, node) {
+            let $chart = document.getElementById("graph-plot-output-chart-" + id);
+            let chartWidth = node.width ? parseInt(node.width) : DEFAULT_CHART_WIDTH;
+            let chartHeight = node.height ? parseInt(node.height) : DEFAULT_CHART_HEIGHT;
+
+            if (!$chart) {
+                const $container = document.getElementById(id)
+                if (!$container) {
+                    return
+                }
+
+                // create the chart bubble
+                const bubble = document.createElementNS("http://www.w3.org/2000/svg", 'polyline')
+                bubble.setAttribute('id', `graph-plot-output-bubble-${id}`)
+                bubble.setAttribute('style', 'fill:#E8F0E8')
+                bubble.setAttribute('stroke', '#999999')
+
+                chartBB = {
+                    x: 0,
+                    y: 45,
+                    width: chartWidth,
+                    height: chartHeight
+                }
+
+                const left = chartBB.x;
+                const top = chartBB.y + 2;
+                const right = chartBB.x + chartBB.width;
+                const bottom = chartBB.y + chartBB.height;
+
+                const points =
+                    `${left + 4},${top - 17} ${left + 4},${top} ` +
+                    `${right},${top} ${right},${bottom} ` +
+                    `${left},${bottom} ${left},${top - 21}`;
+
+                bubble.setAttribute('points', points)
+                $container.insertBefore(bubble, $container.lastChild.nextSibling);
+
+                // add a group to hold the chart
+                const chartGroup = document.createElementNS("http://www.w3.org/2000/svg", 'g');
+                chartGroup.setAttribute('id', `graph-plot-output-chart-${id}`);
+                $container.insertBefore(chartGroup, $container.lastChild.nextSibling);
+
+                let foreignObject = document.createElementNS("http://www.w3.org/2000/svg", 'foreignObject');
+                foreignObject.setAttribute('x', "0px");
+                foreignObject.setAttribute('y', "45px");
+                foreignObject.setAttribute('height', chartHeight);
+                foreignObject.setAttribute('width', chartWidth);
+                chartGroup.appendChild(foreignObject);
+
+                let canvas = document.createElement('canvas');
+                let ctx = canvas.getContext('2d');
+
+                let chart = new Chart(ctx, node.config);
+                foreignObject.appendChild(canvas);
+                chart.update();
+            }
+        }
+
+        RED.events.on("editor:save", redraw)
+
+        RED.comms.subscribe('graph-plot', function (event, msg) {
+            let node = RED.nodes.node(msg.id);
+            render(msg.id, node)
+            if (msg.data != null) {
+                msg.data.forEach(datapoint => {
+                    let dataset = node.config.data.datasets.find(d => d.label === datapoint.label);
+                    if (typeof dataset === 'undefined') {
+                        let colorNames = Object.keys(chartColors);
+                        let colorName = colorNames[node.config.data.datasets.length % colorNames.length];
+                        let newColor = chartColors[colorName];
+                        dataset = {
+                            label: datapoint.label,
+                            backgroundColor: color(newColor).alpha(0.5).rgbString(),
+                            borderColor: newColor,
+                            fill: false,
+                            lineTension: 0,
+                            data: []
+                        };
+
+                        node.config.data.datasets.push(dataset);
+                    }
+                    dataset.data.push({
+                        x: datapoint.time,
+                        y: datapoint.value
+                    });
+                })
+            }
+        })
+    })();
+</script>
+
+<script type="text/html" data-template-name="graph-plot">
+    <div class="form-row">
+        <label style="padding-top: 8px" for="node-input-property"><i class="fa fa-ellipsis-h"></i> Property</label>
+        <input type="text" id="node-input-property" style="width:70%">
+        <input type="hidden" id="node-input-fieldType">
+    </div>
+    <div class="form-row">
+        <label for="node-input-height"><i class="fa fa-arrows-v"></i> Height</label>
+        <input type="number" id="node-input-height" style="width:125px !important">
+        px
+    </div>
+    <div class="form-row">
+        <label for="node-input-width"><i class="fa fa-arrows-h"></i> Width</label>
+        <input type="number" id="node-input-width" style="width:125px !important">
+        px
+    </div>
+    <div class="form-row">
+        <input type="checkbox" id="node-input-title" style="display:inline-block; width:auto; vertical-align:top;">
+        <label for="node-input-title" style="width:70%;"> Show title</label>
+    </div>
+    <div class="form-row">
+        <input type="checkbox" id="node-input-legend" style="display:inline-block; width:auto; vertical-align:top;">
+        <label for="node-input-legend" style="width:70%;"> Show legend</label>
+    </div>
+    <div class="form-row">
+        <label for="node-input-duration"><i class="fa fa-line-chart"></i> Duration</label>
+        <input type="number" id="node-input-duration" style="width:125px !important">
+        ms
+    </div>
+    <div class="form-row">
+        <label for="node-input-delay"><i class="fa fa-line-chart"></i> Delay</label>
+        <input type="number" id="node-input-delay" style="width:125px !important">
+        ms
+    </div>
+    <div class="form-row">
+        <input type="checkbox" id="node-input-hide" style="display:inline-block; width:auto; vertical-align:top;">
+        <label for="node-input-hide" style="width:70%;"> Hide chart on deactivate</label>
+    </div>
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+</script>
+
+<script type="text/html" data-help-name="graph-plot">
+    <p>
+        The graph plot node useful for previewing data over time right in the flow.
+    </p>
+
+    <h3>Inputs</h3>
+    <dl class="message-properties">
+        <dt>payload
+            <span class="property-type">Object</span>
+        </dt>
+        <dd>
+            The payload can be in one of several formats. <br>
+            <h4>A number:</h4>
+            <pre>
+<code>42</code>
+</pre>
+            <h4>A dictionary:</h4>
+            <pre>
+<code>{
+    data-series-0: number,
+    data-series-1: number,
+    data-series-2: number,
+}</code>
+</pre>
+            <h4>An array:</h4>
+            <pre>
+<code>[
+    {
+        label: string,
+        value: number,
+        time: Date
+    }
+]</code>
+</pre>
+            Where label and time is optional.
+
+    <h3>Outputs</h3>
+    No utputs.
+
+    <h3>Details</h3>
+    <p>TBD
+    </p>
+</script>
