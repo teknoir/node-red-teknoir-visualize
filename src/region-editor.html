@@ -59,53 +59,53 @@
     </div>
 </script>
 
-<script type="text/html" data-help-name="region-editor">
-    <p>
-        Draw regions in an image.
-    </p>
+<!--<script type="text/html" data-help-name="region-editor">-->
+<!--    <p>-->
+<!--        Draw regions in an image.-->
+<!--    </p>-->
 
-    <h3>Inputs</h3>
-    <dl className="message-properties">
-        <dt>payload
-            <span className="property-type">Object</span>
-        </dt>
-        <dd>
-            The payload shall be an image that is in mime encoded string format.
-            <pre>
-                <code>
-                    {
-                        payload: mime encoded string image,
-                    }
-                </code>
-            </pre>
-            The <i>Objects</i> property is used to specify where to
-            retrieve the <i>objects</i> information. The <i>Image</i>
-            property for <i>image</i> data.
-            <i>image</i> is an image in <i>String - MIME encoded</i> or <i>Buffer</i> data type.
-        </dd>
-    </dl>
+<!--    <h3>Inputs</h3>-->
+<!--    <dl className="message-properties">-->
+<!--        <dt>payload-->
+<!--            <span className="property-type">Object</span>-->
+<!--        </dt>-->
+<!--        <dd>-->
+<!--            The payload shall be an image that is in mime encoded string format.-->
+<!--            <pre>-->
+<!--                <code>-->
+<!--                    {-->
+<!--                        payload: mime encoded string image,-->
+<!--                    }-->
+<!--                </code>-->
+<!--            </pre>-->
+<!--            The <i>Objects</i> property is used to specify where to-->
+<!--            retrieve the <i>objects</i> information. The <i>Image</i>-->
+<!--            property for <i>image</i> data.-->
+<!--            <i>image</i> is an image in <i>String - MIME encoded</i> or <i>Buffer</i> data type.-->
+<!--        </dd>-->
+<!--    </dl>-->
 
-    <h3>Outputs</h3>
-    <dl className="message-properties">
-        <dt>payload
-            <span className="property-type">Buffer</span>
-        </dt>
-        <dd>
-            TBD
-        </dd>
-    </dl>
+<!--    <h3>Outputs</h3>-->
+<!--    <dl className="message-properties">-->
+<!--        <dt>payload-->
+<!--            <span className="property-type">Buffer</span>-->
+<!--        </dt>-->
+<!--        <dd>-->
+<!--            TBD-->
+<!--        </dd>-->
+<!--    </dl>-->
 
-    <h3>Details</h3>
-    <p><code>msg.payload</code> TBD
-    </p>
-</script>
-<script type="text/html" data-template-name="region-editor">
-    $("#node-input-example1").typedInput({
-    type:"str",
-    types:["str","num","bool"],
-    typeField: "#node-input-example1-type"
-    })
-</script>
+<!--    <h3>Details</h3>-->
+<!--    <p><code>msg.payload</code> TBD-->
+<!--    </p>-->
+<!--</script>-->
+<!--<script type="text/html" data-template-name="region-editor">-->
+<!--    $("#node-input-example1").typedInput({-->
+<!--    type:"str",-->
+<!--    types:["str","num","bool"],-->
+<!--    typeField: "#node-input-example1-type"-->
+<!--    })-->
+<!--</script>-->
 <script type="text/javascript">
     function collate(canvas) {
         let objects = canvas.getObjects();
@@ -142,37 +142,9 @@
 
     RED.comms.subscribe('region-editor', function (event, msg) {
         let node = RED.nodes.node(msg.id);
-        if (!node.canvas) {
-            node.canvas = new fabric.Canvas('polyCanvas')
-        }
-        node.canvas.canvas.setBackgroundImage('https://images.unsplash.com/photo-1661874854804-0f89345cf432?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=MnwzNjA1NjR8MHwxfHJhbmRvbXx8fHx8fHx8fDE2NjIxMDc2NDM&ixlib=rb-1.2.1&q=80&w=400', canvas.renderAll.bind(canvas));
-
-        // render(msg.id, node)
-        // if (msg.data != null) {
-        //     msg.data.forEach(datapoint => {
-        //         let dataset = node.config.data.datasets.find(d => d.label === datapoint.label);
-        //         if (typeof dataset === 'undefined') {
-        //             let colorNames = Object.keys(chartColors);
-        //             let colorName = colorNames[node.config.data.datasets.length % colorNames.length];
-        //             let newColor = chartColors[colorName];
-        //             dataset = {
-        //                 label: datapoint.label,
-        //                 backgroundColor: color(newColor).alpha(0.5).rgbString(),
-        //                 borderColor: newColor,
-        //                 fill: false,
-        //                 lineTension: 0,
-        //                 data: []
-        //             };
-        //
-        //             node.config.data.datasets.push(dataset);
-        //         }
-        //         dataset.data.push({
-        //             x: datapoint.time,
-        //             y: datapoint.value
-        //         });
-        //     })
-        // }
-    })
+        // console.log(msg);
+        node.background = msg.data;
+    });
 
     RED.nodes.registerType('region-editor', {
         category: 'visualize',
@@ -180,10 +152,10 @@
         defaults: {
             name: {value: ''},
             json: {value: '[]', required: true},
+            background: {value: null, required: true}
         },
         inputs: 1,
         outputs: 1,
-        // polygons: [],
         icon: 'tn_dark.svg',
         label: function () {
             return this.name || 'region editor';
@@ -194,26 +166,23 @@
         oneditprepare: function () {
 // canvas Drawing
             var node = this;
+            var background = node.background || 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAIAQMAAAD+wSzIAAAABlBMVEX///+/v7+jQ3Y5AAAADklEQVQI12P4AIX8EAgALgAD/aNpbtEAAAAASUVORK5CYII';
+            var json = node.json || '[]';
+
             if (!node.canvas) {
                 node.canvas = new fabric.Canvas('polyCanvas')
             }
             let canvas = node.canvas;
             canvas.setDimensions({width: 800, height: 600});
-            // canvas.setBackgroundImage('https://images.unsplash.com/photo-1661874854804-0f89345cf432?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=MnwzNjA1NjR8MHwxfHJhbmRvbXx8fHx8fHx8fDE2NjIxMDc2NDM&ixlib=rb-1.2.1&q=80&w=400', canvas.renderAll.bind(canvas));
+            canvas.setBackgroundImage(background, canvas.renderAll.bind(canvas));
 
             var polygonPoints = [];
             var lines = [];
             var isDrawing = false;
 
-            if (!document.getElementById("node-input-json").value) {
-                node.json = JSON.parse('[]');
-            } else {
-                node.json = JSON.parse(document.getElementById("node-input-json").value);
-            }
-
-            // console.log(node.json);
-            for (let i = 0, len = node.json.length; i < len; i++) {
-                canvas.add(makePolygon(node.json[i]));
+            let polygons = JSON.parse(json);
+            for (let i = 0, len = polygons.length; i < len; i++) {
+                canvas.add(makePolygon(polygons[i]));
             }
 
             //
@@ -454,9 +423,9 @@
             }
         },
         oneditsave: function () {
-            this.json = collate(this.canvas);
+            this.json = JSON.stringify(collate(this.canvas));
             var json = document.getElementById("node-input-json");
-            json.value = JSON.stringify(this.json);
+            json.value = this.json;
 
             this.canvas = null;
         }
