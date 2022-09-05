@@ -1,13 +1,13 @@
 {
   "name": "node-red-teknoir-visualize",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "A set of nodes to visualize data on the Teknoir Platform",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/tekn0ir/node-red-teknoir-configure-devices.git"
+    "url": "git+https://github.com/teknoir/node-red-teknoir-teknoir-visualize.git"
   },
   "keywords": [
     "node-red",
@@ -17,7 +17,8 @@
   "node-red": {
     "nodes": {
       "teknoir-bbox-overlay": "src/bbox-overlay.js",
-      "teknoir-graph-plot": "src/graph-plot.js"
+      "teknoir-graph-plot": "src/graph-plot.js",
+      "teknoir-region-editor": "src/region-editor.js"
     }
   },
   "author": "Anders Åslund <anders.aslund@teknoir.ai>",
@@ -26,9 +27,9 @@
   },
   "homepage": "https://teknoir.ai",
   "dependencies": {
-    "node-fetch": "2.6.0",
+    "node-fetch": "3.2.10",
     "uuid": "8.3.2",
-    "canvas": "2.8.0",
+    "canvas": "2.9.3",
     "is-base64": "1.1.0"
   }
 }

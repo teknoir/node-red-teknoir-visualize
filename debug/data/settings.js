@@ -265,55 +265,74 @@ module.exports = {
       // Whether or not to include metric events in the log output
       metrics: false,
       // Whether or not to include audit events in the log output
-      audit: false
-    }
+      audit: false,
   },
-
+  },
 
   // Customising the editor
   editorTheme: {
+    tours: false, // disable the Welcome Tour for new users
     page: {
       title: "Teknoir Dev Studio",
       favicon:  path.join(__dirname, "theme/public/images/logo_red_favicon.png"),
       css: path.join(__dirname, "theme/public/css/merged.custom.css"),
-      scripts: [path.join(__dirname, "theme/public/scripts/moment.min.js"), path.join(__dirname, "theme/public/scripts/chart.min.js"), path.join(__dirname, "theme/public/scripts/chartjs-adapter-moment.min.js"), path.join(__dirname, "theme/public/scripts/chartjs-plugin-streaming.min.js")]
+      scripts: [
+        path.join(__dirname, "theme/public/scripts/moment.min.js"),
+        path.join(__dirname, "theme/public/scripts/chart.min.js"),
+        path.join(
+          __dirname,
+          "theme/public/scripts/chartjs-adapter-moment.min.js"
+        ),
+        path.join(
+          __dirname,
+          "theme/public/scripts/chartjs-plugin-streaming.min.js"
+        ),
+      ],
     },
     header: {
       title: " ",
-      image: path.join(__dirname, "theme/public/images/TN_Logo_White_NoBadge.svg"), // or null to remove image
-      url: "http://kubeflow.teknoir.info/devstudio/" // optional url to make the header text/image a link to this url
+      image: path.join(
+        __dirname,
+        "theme/public/images/TN_Logo_White_NoBadge.svg"
+      ), // or null to remove image
+      url: "http://kubeflow.teknoir.info/devstudio/", // optional url to make the header text/image a link to this url
     },
     deployButton: {
       type:"simple",
       label:"Deploy",
-      icon: path.join(__dirname, "theme/public/images/deploy.png") // or null to remove image
+      icon: path.join(__dirname, "theme/public/images/deploy.png"), // or null to remove image
     },
-    menu: { // Hide unwanted menu items by id. see packages/node_modules/@node-red/editor-client/src/js/red.js:loadEditor for complete list
+    menu: {
+      // Hide unwanted menu items by id. see packages/node_modules/@node-red/editor-client/src/js/red.js:loadEditor for complete list
       "menu-item-import-library": true,
       "menu-item-export-library": true,
       "menu-item-keyboard-shortcuts": true,
       "menu-item-help": {
         label: "Documentation",
-        url: "http://docs.teknoir.info"
-      }
+        url: "http://docs.teknoir.info",
+      },
     },
     userMenu: false, // Hide the user-menu even if adminAuth is enabled
     login: {
-      image: path.join(__dirname, "theme/public/images/TN_Logo_DarkBlue_NoBadge.svg") // a 256x256 image
+      image: path.join(
+        __dirname,
+        "theme/public/images/TN_Logo_DarkBlue_NoBadge.svg"
+      ), // a 256x256 image
     },
     logout: {
-      redirect: "http://teknoir.info/devstudio/"
+      redirect: "http://teknoir.info/devstudio/",
     },
     palette: {
       editable: false, // Enable/disable the Palette Manager
 //      catalogues: [   // Alternative palette manager catalogues
 //        'https://catalogue.nodered.org/catalogue.json'
-      theme: [ // Override node colours - rules test against category/type by RegExp.
-        { category: ".*", type: ".*", color: "#ddd" }
-      ]
+      theme: [
+        // Override node colours - rules test against category/type by RegExp.
+        { category: ".*", type: ".*", color: "#ddd" },
+      ],
     },
     projects: {
-      enabled: false // Enable the projects feature
-    }
-  }
+      enabled: false, // Enable the projects feature
+    },
+  },
 };
