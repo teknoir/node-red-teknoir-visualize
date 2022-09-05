@@ -11,6 +11,11 @@
         <label htmlFor="node-input-name"><i class="fa fa-tag"></i> Name</label>
         <input type="text" id="node-input-name" placeholder="Name">
     </div>
+    <div class="form-row">
+        <label for="node-input-imageProp"><i class="fa fa-tag"></i> Image</label>
+        <input type="text" id="node-input-imageProp" placeholder="imageProp">
+        <input type="hidden" id="node-input-imagePropType">
+    </div>
     <hr align="middle"/>
     <!--    <div className="form-row">-->
     <!--        <label htmlFor="node-input-zoom"><i className="fa fa-tag"></i> Zoom</label>-->
@@ -59,53 +64,61 @@
     </div>
 </script>
 
-<!--<script type="text/html" data-help-name="region-editor">-->
-<!--    <p>-->
-<!--        Draw regions in an image.-->
-<!--    </p>-->
+<script type="text/html" data-help-name="region-editor">
+    <p>
+        Draw regions in an image.
+    </p>
 
-<!--    <h3>Inputs</h3>-->
-<!--    <dl className="message-properties">-->
-<!--        <dt>payload-->
-<!--            <span className="property-type">Object</span>-->
-<!--        </dt>-->
-<!--        <dd>-->
-<!--            The payload shall be an image that is in mime encoded string format.-->
-<!--            <pre>-->
-<!--                <code>-->
-<!--                    {-->
-<!--                        payload: mime encoded string image,-->
-<!--                    }-->
-<!--                </code>-->
-<!--            </pre>-->
-<!--            The <i>Objects</i> property is used to specify where to-->
-<!--            retrieve the <i>objects</i> information. The <i>Image</i>-->
-<!--            property for <i>image</i> data.-->
-<!--            <i>image</i> is an image in <i>String - MIME encoded</i> or <i>Buffer</i> data type.-->
-<!--        </dd>-->
-<!--    </dl>-->
+    <h3>Inputs</h3>
+    <dl className="message-properties">
+        <dt>payload
+            <span className="property-type">Object</span>
+        </dt>
+        <dd>
+            The payload shall have the image property configured and it should be an image that is in mime encoded
+            string format. The image will be used in the editor as a background when defining regions.
+            <pre>
+                <code>
+{
+    image: mime encoded string image,
+}
+                </code>
+            </pre>
+            The <i>Image</i> property for <i>image</i> data.
+            <i>image</i> is an image in <i>String - MIME encoded</i> or <i>Buffer</i> data type.
+        </dd>
+    </dl>
 
-<!--    <h3>Outputs</h3>-->
-<!--    <dl className="message-properties">-->
-<!--        <dt>payload-->
-<!--            <span className="property-type">Buffer</span>-->
-<!--        </dt>-->
-<!--        <dd>-->
-<!--            TBD-->
-<!--        </dd>-->
-<!--    </dl>-->
+    <h3>Outputs</h3>
+    <dl className="message-properties">
+        <dt>payload
+            <span className="property-type">Object</span>
+        </dt>
+        <dd>
+            The outputs appends a field called <i>regions</i> to the incoming message. The <i>regions</i> is an array
+            of polygons. Each polygon is an array of coordinates, x and y.
+        </dd>
+    </dl>
 
-<!--    <h3>Details</h3>-->
-<!--    <p><code>msg.payload</code> TBD-->
-<!--    </p>-->
-<!--</script>-->
-<!--<script type="text/html" data-template-name="region-editor">-->
-<!--    $("#node-input-example1").typedInput({-->
-<!--    type:"str",-->
-<!--    types:["str","num","bool"],-->
-<!--    typeField: "#node-input-example1-type"-->
-<!--    })-->
-<!--</script>-->
+    <h3>Details</h3>
+    <pre><code>
+{
+    image: mime encoded string,
+    regions: [
+        [{x: 100, y: 101}, {x: 102, y: 103}, {x: 104, y: 105}],
+        [{x: 100, y: 102}, {x: 104, y: 106}, {x: 108, y: 110}, {x: 112, y: 114}]
+    ]
+    ... (other data)
+}
+    </code></pre>
+</script>
+<script type="text/html" data-template-name="region-editor">
+    $("#node-input-example1").typedInput({
+    type:"str",
+    types:["str","num","bool"],
+    typeField: "#node-input-example1-type"
+    })
+</script>
 <script type="text/javascript">
     function collate(canvas) {
         let objects = canvas.getObjects();
@@ -152,7 +165,9 @@
         defaults: {
             name: {value: ''},
             json: {value: '[]', required: true},
-            background: {value: null, required: true}
+            background: {value: null, required: false},
+            imageProp: {value: 'image', required: false},
+            imagePropType: {value: 'msgPayload'}
         },
         inputs: 1,
         outputs: 1,
@@ -164,6 +179,23 @@
             return this.name ? "node_label_italic" : "";
         },
         oneditprepare: function () {
+            const msgPayload = {
+                value: "msgPayload",
+                label: "msg.payload."
+            };
+            const msgEvent = {
+                value: "msgEvent",
+                label: "msg.payload.event."
+            };
+            $("#node-input-imageProp").typedInput({
+                default: "msgPayload",
+                types: ['msg', msgPayload, msgEvent],
+                typeField: "#node-input-imagePropType"
+            });
+            if (!$("#node-input-imageProp").typedInput('value').length) {
+                $("#node-input-imageProp").typedInput('type', 'msgEvent');
+                $("#node-input-imageProp").typedInput('value', 'image');
+            }
 // canvas Drawing
             var node = this;
             var background = node.background || 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAIAQMAAAD+wSzIAAAABlBMVEX///+/v7+jQ3Y5AAAADklEQVQI12P4AIX8EAgALgAD/aNpbtEAAAAASUVORK5CYII';

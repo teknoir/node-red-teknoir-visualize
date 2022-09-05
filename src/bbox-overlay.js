@@ -79,7 +79,7 @@ module.exports = function init(RED) {
                     bboxImage = msg[_this.imageProp];
                 }
                 else if (_this.imagePropType === 'msgPayload') {
-                    bboxObjects = msg.payload[_this.imageProp];
+                    bboxImage = msg.payload[_this.imageProp];
                 }
                 else {
                     bboxImage = msg.payload.event[_this.imageProp];
