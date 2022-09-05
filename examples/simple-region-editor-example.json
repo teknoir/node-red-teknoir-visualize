@@ -1,0 +1,141 @@
+[
+  {
+    "id": "e0b20836c36e6c20",
+    "type": "tab",
+    "label": "Flow 1",
+    "disabled": false,
+    "info": "",
+    "env": []
+  },
+  {
+    "id": "96668799.c4d6d8",
+    "type": "jimp-image",
+    "z": "e0b20836c36e6c20",
+    "name": "Read the random Unspash image",
+    "data": "https://images.unsplash.com/photo-1581091212991-8891c7d4bd9b?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=800&q=80",
+    "dataType": "str",
+    "ret": "b64",
+    "parameter1": "",
+    "parameter1Type": "msg",
+    "parameter2": "",
+    "parameter2Type": "msg",
+    "parameter3": "",
+    "parameter3Type": "msg",
+    "parameter4": "",
+    "parameter4Type": "msg",
+    "parameter5": "",
+    "parameter5Type": "msg",
+    "parameter6": "",
+    "parameter6Type": "msg",
+    "parameter7": "",
+    "parameter7Type": "msg",
+    "parameter8": "",
+    "parameter8Type": "msg",
+    "sendProperty": "payload",
+    "parameterCount": 0,
+    "jimpFunction": "none",
+    "selectedJimpFunction": {
+      "name": "none",
+      "fn": "none",
+      "description": "Just loads the image.",
+      "parameters": []
+    },
+    "x": 240,
+    "y": 100,
+    "wires": [
+      [
+        "a3e564da.ffe998",
+        "a9ba32f81010c0dd"
+      ]
+    ]
+  },
+  {
+    "id": "16bbdba9.a15f64",
+    "type": "inject",
+    "z": "e0b20836c36e6c20",
+    "name": "",
+    "repeat": "",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "",
+    "payload": "true",
+    "payloadType": "bool",
+    "x": 55,
+    "y": 100,
+    "wires": [
+      [
+        "96668799.c4d6d8"
+      ]
+    ],
+    "l": false
+  },
+  {
+    "id": "a3e564da.ffe998",
+    "type": "image viewer",
+    "z": "e0b20836c36e6c20",
+    "name": "",
+    "width": "400",
+    "data": "payload",
+    "dataType": "msg",
+    "active": true,
+    "x": 110,
+    "y": 200,
+    "wires": [
+      []
+    ]
+  },
+  {
+    "id": "a7a86b6762691c53",
+    "type": "region-editor",
+    "z": "e0b20836c36e6c20",
+    "name": "",
+    "json": "[[{\"x\":142.30542367408646,\"y\":523.0002618712003},{\"x\":184.7402583317163,\"y\":651.7680360046978},{\"x\":361.79594776527534,\"y\":645.9149553622661},{\"x\":322.2876534288614,\"y\":540.5595037984955}]]",
+    "background": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAIAQMAAAD+wSzIAAAABlBMVEX///+/v7+jQ3Y5AAAADklEQVQI12P4AIX8EAgALgAD/aNpbtEAAAAASUVORK5CYII",
+    "imageProp": "image",
+    "imagePropType": "msgPayload",
+    "x": 670,
+    "y": 200,
+    "wires": [
+      [
+        "b01e4b1a31682080"
+      ]
+    ]
+  },
+  {
+    "id": "b01e4b1a31682080",
+    "type": "debug",
+    "z": "e0b20836c36e6c20",
+    "name": "debug 1",
+    "active": true,
+    "tosidebar": true,
+    "console": false,
+    "tostatus": false,
+    "complete": "true",
+    "targetType": "full",
+    "statusVal": "",
+    "statusType": "auto",
+    "x": 760,
+    "y": 280,
+    "wires": []
+  },
+  {
+    "id": "a9ba32f81010c0dd",
+    "type": "function",
+    "z": "e0b20836c36e6c20",
+    "name": "Payload object",
+    "func": "msg.payload = {\n    image: msg.payload\n};\nreturn msg;",
+    "outputs": 1,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 560,
+    "y": 100,
+    "wires": [
+      [
+        "a7a86b6762691c53"
+      ]
+    ]
+  }
+]

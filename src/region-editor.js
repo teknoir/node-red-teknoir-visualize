@@ -1,8 +1,9 @@
-module.exports = function(RED) {
+const isBase64 = require("is-base64");
+module.exports = function (RED) {
     "use strict";
 
     function RegionEditor(n) {
-        RED.nodes.createNode(this,n);
+        RED.nodes.createNode(this, n);
         let node = this;
         let json = n.json || '{}';
         node.imageProp = n.imageProp || 'image';
@@ -12,13 +13,25 @@ module.exports = function(RED) {
         function getImageFromMsg(msg) {
             if (node.imagePropType === 'msg') {
                 return msg[node.imageProp];
-            }
-            else if (node.imagePropType === 'msgPayload') {
+            } else if (node.imagePropType === 'msgPayload') {
                 return msg.payload[node.imageProp];
-            }
-            else {
+            } else {
                 return msg.payload.event[node.imageProp];
             }
+        }
+
+        function validateImageFormat(data) {
+            //if image is base64, convert it to a buffer
+            let isString = typeof data === 'string';
+            let hasMime = false, isBase64Image = false
+            if (isString) {
+                hasMime = data.startsWith("data:");
+                isBase64Image = isBase64(data, {mimeRequired: hasMime});
+            }
+            if (isString && isBase64Image) {
+                return true;
+            }
+            return false;
         }
 
         function sendDataToClient(data, msg) {
@@ -35,17 +48,22 @@ module.exports = function(RED) {
             }
         }
 
-        this.on("input", function(msg, send, done) {
-            // TODO: Validate payload is mime image
+        this.on("input", function (msg, send, done) {
             let image = getImageFromMsg(msg);
-            if (image) {
+            if (image && validateImageFormat(image)) {
                 sendDataToClient(image, msg);
+                if (node.imagePropType === 'msg') {
+                    msg['regions'] = JSON.parse(json);
+                } else {
+                    msg.payload['regions'] = JSON.parse(json);
+                }
+            } else {
+                node.error("Image is not in mime base64 encoded format!", msg);
             }
-            msg.payload['regions'] = JSON.parse(json);
             send(msg);
             done();
         });
     }
 
-    RED.nodes.registerType("region-editor",RegionEditor);
+    RED.nodes.registerType("region-editor", RegionEditor);
 }
