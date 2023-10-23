@@ -96,7 +96,7 @@
         </dt>
         <dd>
             The outputs appends a field called <i>regions</i> to the incoming message. The <i>regions</i> is an array
-            of polygons. Each polygon is an array of coordinates, x and y.
+            of polygons. Each polygon is an array of coordinates, x and y in percent of image width and height.
         </dd>
     </dl>
 
@@ -105,8 +105,8 @@
 {
     image: mime encoded string,
     regions: [
-        [{x: 100, y: 101}, {x: 102, y: 103}, {x: 104, y: 105}],
-        [{x: 100, y: 102}, {x: 104, y: 106}, {x: 108, y: 110}, {x: 112, y: 114}]
+        [{x: 0.1, y: 0.11}, {x: 0.12, y: 0.13}, {x: 0.14, y: 0.15}],
+        [{x: 0.1, y: 0.11}, {x: 0.12, y: 0.13}, {x: 0.14, y: 0.15}]
     ]
     ... (other data)
 }
@@ -120,7 +120,21 @@
     })
 </script>
 <script type="text/javascript">
-    function collate(canvas) {
+    function fromRelative(point, width, height) {
+        return {
+            x: point.x * width,
+            y: point.y * height
+        };
+    }
+
+    function toRelative(point, width, height) {
+        return {
+            x: point.x / parseFloat(width),
+            y: point.y / parseFloat(height)
+        };
+    }
+
+    function collate(canvas, width, height) {
         let objects = canvas.getObjects();
         let objectsCount = canvas.getObjects().length;
         let polygons = [];
@@ -150,7 +164,17 @@
             polygons[i] = _.uniqWith(poly, _.isEqual);
         }
 
-        return polygons;
+        let relativePolygons = [];
+        for (let i = 0; i < polygons.length; i++) {
+            let polygon = polygons[i]
+            let relativePolygon = [];
+            for (let i = 0; i < polygon.length; i++) {
+                relativePolygon.push(toRelative(polygon[i], width, height));
+            }
+            relativePolygons.push(relativePolygon);
+        }
+
+        return relativePolygons;
     }
 
     RED.comms.subscribe('region-editor', function (event, msg) {
@@ -200,21 +224,36 @@
             var node = this;
             var background = node.background || 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAIAQMAAAD+wSzIAAAABlBMVEX///+/v7+jQ3Y5AAAADklEQVQI12P4AIX8EAgALgAD/aNpbtEAAAAASUVORK5CYII';
             var json = node.json || '[]';
-
+            var polygonPoints = [];
+            var lines = [];
+            var isDrawing = false;
             if (!node.canvas) {
                 node.canvas = new fabric.Canvas('polyCanvas')
             }
             let canvas = node.canvas;
-            canvas.setDimensions({width: 800, height: 600});
-            canvas.setBackgroundImage(background, canvas.renderAll.bind(canvas));
+            node.width = node.width || 800;
+            node.height = node.height || 600;
+            let width = node.width;
+            let height = node.height;
 
-            var polygonPoints = [];
-            var lines = [];
-            var isDrawing = false;
+            const img = new Image(background);
+            img.src = background;
+            img.onload = function () {
+                node.width = width = img.naturalWidth;
+                node.height = height = img.naturalHeight;
 
-            let polygons = JSON.parse(json);
-            for (let i = 0, len = polygons.length; i < len; i++) {
-                canvas.add(makePolygon(polygons[i]));
+                canvas.setDimensions({width: width, height: height});
+                canvas.setBackgroundImage(background, canvas.renderAll.bind(canvas));
+
+                let polygons = JSON.parse(json);
+                for (let i = 0, len = polygons.length; i < len; i++) {
+                    let relativePolygon = polygons[i];
+                    let polygon = [];
+                    for (let j = 0; j < relativePolygon.length; j++) {
+                        polygon.push(fromRelative(relativePolygon[j], width, height));
+                    }
+                    canvas.add(makePolygon(polygon));
+                }
             }
 
             //
@@ -455,7 +494,7 @@
             }
         },
         oneditsave: function () {
-            this.json = JSON.stringify(collate(this.canvas));
+            this.json = JSON.stringify(collate(this.canvas, this.width, this.height));
             var json = document.getElementById("node-input-json");
             json.value = this.json;
 

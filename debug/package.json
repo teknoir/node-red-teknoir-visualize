@@ -16,9 +16,6 @@
     "body-parser": "^1.20.0",
     "node-red": "^3.0.2",
     "node-red-contrib-image-tools": "^2.0.4",
-    "node-red-node-data-generator": "^1.0.1",
-    "node-red-contrib-files": "github:tekn0ir/node-red-contrib-files#master",
-    "node-red-contrib-webcamera": "github:tekn0ir/node-red-contrib-webcamera#master",
     "node-red-teknoir-visualize": "file:../",
     "nodemon": "^2.0.19"
   },
