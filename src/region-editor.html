@@ -24,20 +24,9 @@
     <div className="form-row">
         <label htmlFor="node-canvas"><i class="fa fa-tag"></i> Canvas</label>
         <ul id="node-canvas" style="display:inline-block">
-            <li id="add" class="red-ui-typedInput-container"
-                style="display:inline-block;padding:5px 10px;margin-right:-1px;cursor:pointer"><i class="fa fa-plus"
-                                                                                                  title="New poly"></i>
-                <!--            <li id="pencil" class="red-ui-typedInput-container" style="display:inline-block;padding:5px 10px;margin-right:-1px;cursor:pointer"><i class="fa fa-pencil" title="L: Line"></i>-->
-                <!--            <li id="arrows" class="red-ui-typedInput-container" style="display:inline-block;padding:5px 10px;margin-right:-1px;cursor:pointer"><i class="fa fa-arrows" title="M: Move"></i>-->
-            <li id="edit" class="red-ui-typedInput-container"
-                style="display:inline-block;padding:5px 10px;margin-right:-1px;cursor:pointer"><i class="fa fa-edit"
-                                                                                                  title="Edit selected poly"></i>
-                <!--            <li id="plus" class="red-ui-typedInput-container" style="display:inline-block;padding:5px 10px;margin-right:-1px;cursor:pointer"><i class="fa fa-plus" title="A: Add"></i>-->
-                <!--            <li id="scissors" class="red-ui-typedInput-container" style="display:inline-block;padding:5px 10px;margin-right:-1px;cursor:pointer"><i class="fa fa-scissors" title="C: Cut"></i>-->
-                <!--            <li id="crosshairs" class="red-ui-typedInput-container" style="display:inline-block;padding:5px 10px;margin-right:-1px;cursor:pointer"><i class="fa fa-crosshairs" title="O: Change Origin"></i>-->
-                <!--            <li id="eye-slash" class="red-ui-typedInput-container" style="display:inline-block;padding:5px 10px;margin-right:-1px;cursor:pointer"><i class="fa fa-eye-slash" title="V: Toggle Visibility"></i>-->
-                <!--            <li id="anchor" class="red-ui-typedInput-container" style="display:inline-block;padding:5px 10px;margin-right:-1px;cursor:pointer"><i class="fa fa-anchor" title="S: Toggle Grid Snap"></i>-->
-            </li>
+            <li id="add" class="red-ui-typedInput-container" style="display:inline-block;padding:5px 10px;margin-right:-1px;cursor:pointer"><i class="fa fa-area-chart" title="New poly"></i>
+            <li id="add-tripwire" class="red-ui-typedInput-container" style="display:inline-block;padding:5px 10px;margin-right:-1px;cursor:pointer"><i class="fa fa-arrow-right " title="New tripwire"></i>
+            <li id="edit" class="red-ui-typedInput-container" style="display:inline-block;padding:5px 10px;margin-right:-1px;cursor:pointer"><i class="fa fa-edit" title="Edit selected poly"></i></li>
         </ul>
         <ul style="display:inline-block">
             <!--            <li id="undo" class="red-ui-typedInput-container" style="display:inline-block;padding:5px 10px;margin-right:-1px;cursor:pointer"><i class="fa fa-undo" title="U: Undo"></i>-->
@@ -227,6 +216,7 @@
             var polygonPoints = [];
             var lines = [];
             var isDrawing = false;
+            var isDrawingTripWire = false;
             if (!node.canvas) {
                 node.canvas = new fabric.Canvas('polyCanvas')
             }
@@ -264,6 +254,19 @@
                     isDrawing = true;
                 }
             };
+
+          document.getElementById("add-tripwire").onclick = function () {
+            if (isDrawingTripWire) {
+              finalize();
+            } else {
+              isDrawingTripWire = true;
+
+              // reset the polygon drawing state
+              isDrawing = false;
+              polygonPoints.length = 0;
+              lines.length = 0;
+            }
+          };
 
             //
             document.getElementById("edit").onclick = function () {
@@ -327,14 +330,14 @@
                     this.lastPosX = evt.e.clientX;
                     this.lastPosY = evt.e.clientY;
                 }
-                if (isDrawing) {
+                if (isDrawing || isDrawingTripWire) {
                     var _mouse = this.getPointer(evt.e);
                     var _x = _mouse.x;
                     var _y = _mouse.y;
                     var line = new fabric.Line([_x, _y, _x, _y], {
                         strokeWidth: 1,
                         selectable: false,
-                        stroke: 'red'
+                        stroke: isDrawing ? 'red' : 'green'
                     });
 
                     polygonPoints.push(new fabric.Point(_x, _y));
@@ -342,6 +345,11 @@
 
                     this.add(line);
                     this.selection = false;
+
+                    // finalize the drawing for tripwire if we have 2 points
+                    if (isDrawingTripWire && polygonPoints.length === 2) {
+                      finalize();
+                    }
                 }
 
                 // var json = document.getElementById("node-input-json");
@@ -371,7 +379,7 @@
                     this.lastPosX = e.clientX;
                     this.lastPosY = e.clientY;
                 }
-                if (lines.length && isDrawing) {
+                if (lines.length && (isDrawing || isDrawingTripWire)) {
                     var _mouse = this.getPointer(evt.e);
                     lines[lines.length - 1].set({
                         x2: _mouse.x,
@@ -400,16 +408,123 @@
 
 //
             function finalize() {
-                isDrawing = false;
-
-                lines.forEach(function (line) {
-                    canvas.remove(line);
+              if (isDrawingTripWire) {
+                isDrawingTripWire = false;
+                let tripwire = new fabric.Line([polygonPoints[0].x, polygonPoints[0].y, polygonPoints[1].x, polygonPoints[1].y], {
+                  strokeWidth: 3,
+                  selectable: true,
+                  stroke: 'green'
                 });
 
+                let tripwireArrowAngle = Math.atan2(polygonPoints[1].y - polygonPoints[0].y, polygonPoints[1].x - polygonPoints[0].x) * (180 / Math.PI);
+                let tripwireArrowHead = new fabric.Triangle({
+                  left: polygonPoints[1].x,
+                  top: polygonPoints[1].y,
+                  originX: 'center',
+                  originY: 'center',
+                  angle: tripwireArrowAngle + 90, // Adjust the angle to point correctly
+                  width: 10,
+                  height: 15,
+                  fill: 'green'
+                });
+                canvas.add(tripwire);
+                canvas.add(tripwireArrowHead);
+
+                // Calculate the middle point of the tripwire. This is going to be a reference point for the entry and exit vectors
+                let midPoint = new fabric.Point((polygonPoints[0].x + polygonPoints[1].x) / 2, (polygonPoints[0].y + polygonPoints[1].y) / 2);
+
+                // Calculate the direction vector from the start point to the end point
+                let dirVector = new fabric.Point(polygonPoints[1].x - polygonPoints[0].x, polygonPoints[1].y - polygonPoints[0].y);
+
+                // Calculate the perpendicular vectors to the direction vector (tripwire)
+                let perpVector1 = new fabric.Point(-dirVector.y, dirVector.x);
+                let perpVector2 = new fabric.Point(dirVector.y, -dirVector.x);
+
+                // Normalize the vectors for entry/exit display
+                let magnitude1 = Math.sqrt(perpVector1.x * perpVector1.x + perpVector1.y * perpVector1.y);
+                let magnitude2 = Math.sqrt(perpVector2.x * perpVector2.x + perpVector2.y * perpVector2.y);
+                let normalizedPerpVector1 = new fabric.Point(perpVector1.x / magnitude1, perpVector1.y / magnitude1);
+                let normalizedPerpVector2 = new fabric.Point(perpVector2.x / magnitude2, perpVector2.y / magnitude2);
+
+                // Calculate the entry and exit points
+                let arrowLength = 30; // Length of the arrow
+                let arrowOffset = 10; // Offset for arrow tip from midpoint
+                let exitPoint = new fabric.Point(midPoint.x + normalizedPerpVector1.x * arrowLength, midPoint.y + normalizedPerpVector1.y * arrowLength);
+                let entryPoint = new fabric.Point(midPoint.x + normalizedPerpVector2.x * arrowLength, midPoint.y + normalizedPerpVector2.y * arrowLength);
+
+                // Draw the vectors on the canvas
+                let entryVector = new fabric.Line([midPoint.x, midPoint.y, entryPoint.x, entryPoint.y], {
+                  stroke: 'red',
+                  strokeWidth: 2,
+                  selectable: false
+                });
+                let exitVector = new fabric.Line([midPoint.x, midPoint.y, exitPoint.x, exitPoint.y], {
+                  stroke: 'red',
+                  strokeWidth: 2,
+                  selectable: false
+                });
+                canvas.add(entryVector);
+                canvas.add(exitVector);
+
+                // Add the text "Entry" and "Exit" next to the vectors
+                let entryText = new fabric.Text("Entry", {
+                  left: entryPoint.x,
+                  top: entryPoint.y,
+                  fontSize: 20,
+                  fill: 'red'
+                });
+                let exitText = new fabric.Text("Exit", {
+                  left: exitPoint.x,
+                  top: exitPoint.y,
+                  fontSize: 20,
+                  fill: 'red'
+                });
+                canvas.add(entryText);
+                canvas.add(exitText);
+
+                // Calculate positions for the arrowheads with offset
+                let adjustedEntryPoint = new fabric.Point(midPoint.x - normalizedPerpVector2.x * arrowOffset, midPoint.y - normalizedPerpVector2.y * arrowOffset);
+                let adjustedExitPoint = new fabric.Point(midPoint.x - normalizedPerpVector1.x * arrowOffset, midPoint.y - normalizedPerpVector1.y * arrowOffset);
+
+                // Add arrowheads to the vectors
+                let arrowAngle1 = Math.atan2(midPoint.y - entryPoint.y, midPoint.x - entryPoint.x) * (180 / Math.PI);
+                let arrowHead1 = new fabric.Triangle({
+                  left: adjustedExitPoint.x,
+                  top: adjustedExitPoint.y,
+                  originX: 'center',
+                  originY: 'center',
+                  angle: arrowAngle1 + 90, // Adjust the angle to point correctly
+                  width: 10,
+                  height: 15,
+                  fill: 'red'
+                });
+                canvas.add(arrowHead1);
+
+                let arrowAngle2 = Math.atan2(midPoint.y - exitPoint.y, midPoint.x - exitPoint.x) * (180 / Math.PI);
+                let arrowHead2 = new fabric.Triangle({
+                  left: adjustedEntryPoint.x,
+                  top: adjustedEntryPoint.y,
+                  originX: 'center',
+                  originY: 'center',
+                  angle: arrowAngle2 + 90, // Adjust the angle to point correctly
+                  width: 10,
+                  height: 15,
+                  fill: 'red'
+                });
+                canvas.add(arrowHead2);
+              } else if (isDrawing) {
+                isDrawing = false;
                 canvas.add(makePolygon(polygonPoints)).renderAll();
-                canvas.selection = true;
-                lines.length = 0;
-                polygonPoints.length = 0;
+              }
+
+              canvas.selection = true;
+
+              lines.forEach(function (line) {
+                canvas.remove(line);
+              });
+
+              lines.length = 0;
+              polygonPoints.length = 0;
             }
 
 
