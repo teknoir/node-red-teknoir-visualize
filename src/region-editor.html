@@ -427,8 +427,6 @@
                   height: 15,
                   fill: 'green'
                 });
-                canvas.add(tripwire);
-                canvas.add(tripwireArrowHead);
 
                 // Calculate the middle point of the tripwire. This is going to be a reference point for the entry and exit vectors
                 let midPoint = new fabric.Point((polygonPoints[0].x + polygonPoints[1].x) / 2, (polygonPoints[0].y + polygonPoints[1].y) / 2);
@@ -446,25 +444,27 @@
                 let normalizedPerpVector1 = new fabric.Point(perpVector1.x / magnitude1, perpVector1.y / magnitude1);
                 let normalizedPerpVector2 = new fabric.Point(perpVector2.x / magnitude2, perpVector2.y / magnitude2);
 
+                // Length of the arrow
+                let arrowLength = 30;
+
+                // Offset for arrow tip from midpoint
+                let arrowOffset = 10;
+
                 // Calculate the entry and exit points
-                let arrowLength = 30; // Length of the arrow
-                let arrowOffset = 10; // Offset for arrow tip from midpoint
                 let exitPoint = new fabric.Point(midPoint.x + normalizedPerpVector1.x * arrowLength, midPoint.y + normalizedPerpVector1.y * arrowLength);
                 let entryPoint = new fabric.Point(midPoint.x + normalizedPerpVector2.x * arrowLength, midPoint.y + normalizedPerpVector2.y * arrowLength);
 
                 // Draw the vectors on the canvas
-                let entryVector = new fabric.Line([midPoint.x, midPoint.y, entryPoint.x, entryPoint.y], {
+                let entryVector = new fabric.Polyline([{x: midPoint.x, y: midPoint.y}, {x: entryPoint.x, y: entryPoint.y}], {
                   stroke: 'red',
                   strokeWidth: 2,
                   selectable: false
                 });
-                let exitVector = new fabric.Line([midPoint.x, midPoint.y, exitPoint.x, exitPoint.y], {
+                let exitVector = new fabric.Polyline([{x: midPoint.x, y: midPoint.y}, {x: exitPoint.x, y: exitPoint.y}], {
                   stroke: 'red',
                   strokeWidth: 2,
                   selectable: false
                 });
-                canvas.add(entryVector);
-                canvas.add(exitVector);
 
                 // Add the text "Entry" and "Exit" next to the vectors
                 let entryText = new fabric.Text("Entry", {
@@ -479,39 +479,43 @@
                   fontSize: 20,
                   fill: 'red'
                 });
-                canvas.add(entryText);
-                canvas.add(exitText);
 
                 // Calculate positions for the arrowheads with offset
                 let adjustedEntryPoint = new fabric.Point(midPoint.x - normalizedPerpVector2.x * arrowOffset, midPoint.y - normalizedPerpVector2.y * arrowOffset);
                 let adjustedExitPoint = new fabric.Point(midPoint.x - normalizedPerpVector1.x * arrowOffset, midPoint.y - normalizedPerpVector1.y * arrowOffset);
 
                 // Add arrowheads to the vectors
-                let arrowAngle1 = Math.atan2(midPoint.y - entryPoint.y, midPoint.x - entryPoint.x) * (180 / Math.PI);
-                let arrowHead1 = new fabric.Triangle({
+                let entryArrowAngle = Math.atan2(midPoint.y - entryPoint.y, midPoint.x - entryPoint.x) * (180 / Math.PI);
+                let entryArrowHead = new fabric.Triangle({
                   left: adjustedExitPoint.x,
                   top: adjustedExitPoint.y,
                   originX: 'center',
                   originY: 'center',
-                  angle: arrowAngle1 + 90, // Adjust the angle to point correctly
+                  angle: entryArrowAngle + 90, // Adjust the angle to point correctly
                   width: 10,
                   height: 15,
                   fill: 'red'
                 });
-                canvas.add(arrowHead1);
 
-                let arrowAngle2 = Math.atan2(midPoint.y - exitPoint.y, midPoint.x - exitPoint.x) * (180 / Math.PI);
-                let arrowHead2 = new fabric.Triangle({
+                let exitArrowAngle = Math.atan2(midPoint.y - exitPoint.y, midPoint.x - exitPoint.x) * (180 / Math.PI);
+                let exitArrowHead = new fabric.Triangle({
                   left: adjustedEntryPoint.x,
                   top: adjustedEntryPoint.y,
                   originX: 'center',
                   originY: 'center',
-                  angle: arrowAngle2 + 90, // Adjust the angle to point correctly
+                  angle: exitArrowAngle + 90, // Adjust the angle to point correctly
                   width: 10,
                   height: 15,
                   fill: 'red'
                 });
-                canvas.add(arrowHead2);
+
+                // Create the entire group so that we can move the entire tripwire as a single entity
+                let tripwireGroup = new fabric.Group([tripwire, tripwireArrowHead, entryVector, exitVector, entryArrowHead, exitArrowHead, entryText, exitText], {
+                  selectable: true // Make the group selectable
+                });
+
+                // Add the group to the canvas
+                canvas.add(tripwireGroup);
               } else if (isDrawing) {
                 isDrawing = false;
                 canvas.add(makePolygon(polygonPoints)).renderAll();
