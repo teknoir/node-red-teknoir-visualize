@@ -48,8 +48,12 @@
         </div>
     </div>
     <div className="form-row">
-        <label htmlFor="node-input-json"><i class="fa fa-tag"></i> JSON</label>
-        <textarea id="node-input-json" style="width:800px" placeholder="[]" readonly/>
+        <label htmlFor="node-input-regionsJson"><i class="fa fa-tag"></i> Regions JSON</label>
+        <textarea id="node-input-regionsJson" style="width:800px" placeholder="[]" readonly></textarea>
+    </div>
+    <div className="form-row">
+        <label htmlFor="node-input-tripwiresJson"><i class="fa fa-tag"></i> Tripwires JSON</label>
+        <textarea id="node-input-tripwiresJson" style="width:800px" placeholder="[]" readonly></textarea>
     </div>
 </script>
 
@@ -123,52 +127,68 @@
         };
     }
 
-    function collate(canvas, width, height) {
-        let objects = canvas.getObjects();
-        let objectsCount = canvas.getObjects().length;
-        let polygons = [];
-        for (var i = 0, len = objectsCount; i < len; i++) {
-            var matrix = objects[i].calcTransformMatrix();
-            let poly = [];
-            var transformedPoints = objects[i].get("points")
-                .map(function (p) {
-                    return new fabric.Point(
-                        p.x - objects[i].pathOffset.x,
-                        p.y - objects[i].pathOffset.y);
-                })
-                .map(function (p) {
-                    return fabric.util.transformPoint(p, matrix);
-                });
+    function collate(canvas, width, height, type) {
+      let objects = canvas.getObjects().filter(obj => obj.type === type);
+      let objectsCount = objects.length;
+      let polygons = [];
+      for (var i = 0; i < objectsCount; i++) {
+        var matrix = objects[i].calcTransformMatrix();
+        let poly = [];
 
-            transformedPoints.map(function (p) {
-                var pt = {
-                    x: p.x,
-                    y: p.y
-                };
-
-                poly.push(pt);
-            })
-
-            // Make unique coordinates
-            polygons[i] = _.uniqWith(poly, _.isEqual);
+        // the case for tripwires
+        if (objects[i].type === 'group') {
+          // the main tripwire line is contained in a group object as a polygon
+          let polygonObj = objects[i].getObjects().find(obj => obj.type === 'polygon');
+          if (polygonObj) {
+            poly = transformPoints(polygonObj, matrix);
+          }
+        } else {
+          poly = transformPoints(objects[i], matrix);
         }
 
-        let relativePolygons = [];
-        for (let i = 0; i < polygons.length; i++) {
-            let polygon = polygons[i]
-            let relativePolygon = [];
-            for (let i = 0; i < polygon.length; i++) {
-                relativePolygon.push(toRelative(polygon[i], width, height));
-            }
-            relativePolygons.push(relativePolygon);
-        }
+        // Make unique coordinates
+        polygons[i] = _.uniqWith(poly, _.isEqual);
+      }
 
-        return relativePolygons;
+      let relativePolygons = [];
+      for (let i = 0; i < polygons.length; i++) {
+        let polygon = polygons[i]
+        let relativePolygon = [];
+        for (let i = 0; i < polygon.length; i++) {
+          relativePolygon.push(toRelative(polygon[i], width, height));
+        }
+        relativePolygons.push(relativePolygon);
+      }
+
+      return relativePolygons;
+    }
+
+    function transformPoints(polygon, matrix) {
+      var transformedPoints = polygon.get("points")
+        .map(function (p) {
+          return new fabric.Point(
+            p.x - polygon.pathOffset.x,
+            p.y - polygon.pathOffset.y);
+        })
+        .map(function (p) {
+          return fabric.util.transformPoint(p, matrix);
+        });
+
+      let poly = []
+      transformedPoints.map(function (p) {
+        var pt = {
+          x: p.x,
+          y: p.y
+        };
+
+        poly.push(pt);
+      })
+
+      return poly;
     }
 
     RED.comms.subscribe('region-editor', function (event, msg) {
         let node = RED.nodes.node(msg.id);
-        // console.log(msg);
         node.background = msg.data;
     });
 
@@ -178,6 +198,8 @@
         defaults: {
             name: {value: ''},
             json: {value: '[]', required: true},
+            regionsJson: {value: '[]', required: true},
+            tripwiresJson: {value: '[]', required: true},
             background: {value: null, required: false},
             imageProp: {value: 'image', required: false},
             imagePropType: {value: 'msgPayload'}
@@ -212,7 +234,8 @@
 // canvas Drawing
             var node = this;
             var background = node.background || 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAIAQMAAAD+wSzIAAAABlBMVEX///+/v7+jQ3Y5AAAADklEQVQI12P4AIX8EAgALgAD/aNpbtEAAAAASUVORK5CYII';
-            var json = node.json || '[]';
+            var regionsJson = node.regionsJson || '[]';
+            var tripwiresJson = node.tripwiresJson || '[]';
             var polygonPoints = [];
             var lines = [];
             var isDrawing = false;
@@ -235,15 +258,25 @@
                 canvas.setDimensions({width: width, height: height});
                 canvas.setBackgroundImage(background, canvas.renderAll.bind(canvas));
 
-                let polygons = JSON.parse(json);
-                for (let i = 0, len = polygons.length; i < len; i++) {
-                    let relativePolygon = polygons[i];
+                let regions = JSON.parse(regionsJson);
+                for (let i = 0, len = regions.length; i < len; i++) {
+                    let relativePolygon = regions[i];
                     let polygon = [];
                     for (let j = 0; j < relativePolygon.length; j++) {
                         polygon.push(fromRelative(relativePolygon[j], width, height));
                     }
                     canvas.add(makePolygon(polygon));
                 }
+
+                let tripwires = JSON.parse(tripwiresJson);
+              for (let i = 0, len = tripwires.length; i < len; i++) {
+                let relativeTripwire = tripwires[i];
+                let polygon = [];
+                for (let j = 0; j < relativeTripwire.length; j++) {
+                  polygon.push(fromRelative(relativeTripwire[j], width, height));
+                }
+                canvas.add(makeTripwire(polygon));
+              }
             }
 
             //
@@ -351,9 +384,6 @@
                       finalize();
                     }
                 }
-
-                // var json = document.getElementById("node-input-json");
-                // json.value = JSON.stringify(collate(this));
             });
 
             canvas.on('mouse:up', function (evt) {
@@ -364,9 +394,6 @@
                     this.isDragging = false;
                     this.selection = true;
                 }
-
-                // var json = document.getElementById("node-input-json");
-                // json.value = JSON.stringify(collate(this));
             });
 
             canvas.on('mouse:move', function (evt) {
@@ -387,9 +414,6 @@
                     }).setCoords();
                     this.renderAll();
                 }
-
-                // var json = document.getElementById("node-input-json");
-                // json.value = JSON.stringify(collate(this));
             });
 
             canvas.on('mouse:wheel', function (opt) {
@@ -410,112 +434,7 @@
             function finalize() {
               if (isDrawingTripWire) {
                 isDrawingTripWire = false;
-                let tripwire = new fabric.Line([polygonPoints[0].x, polygonPoints[0].y, polygonPoints[1].x, polygonPoints[1].y], {
-                  strokeWidth: 3,
-                  selectable: true,
-                  stroke: 'green'
-                });
-
-                let tripwireArrowAngle = Math.atan2(polygonPoints[1].y - polygonPoints[0].y, polygonPoints[1].x - polygonPoints[0].x) * (180 / Math.PI);
-                let tripwireArrowHead = new fabric.Triangle({
-                  left: polygonPoints[1].x,
-                  top: polygonPoints[1].y,
-                  originX: 'center',
-                  originY: 'center',
-                  angle: tripwireArrowAngle + 90, // Adjust the angle to point correctly
-                  width: 10,
-                  height: 15,
-                  fill: 'green'
-                });
-
-                // Calculate the middle point of the tripwire. This is going to be a reference point for the entry and exit vectors
-                let midPoint = new fabric.Point((polygonPoints[0].x + polygonPoints[1].x) / 2, (polygonPoints[0].y + polygonPoints[1].y) / 2);
-
-                // Calculate the direction vector from the start point to the end point
-                let dirVector = new fabric.Point(polygonPoints[1].x - polygonPoints[0].x, polygonPoints[1].y - polygonPoints[0].y);
-
-                // Calculate the perpendicular vectors to the direction vector (tripwire)
-                let perpVector1 = new fabric.Point(-dirVector.y, dirVector.x);
-                let perpVector2 = new fabric.Point(dirVector.y, -dirVector.x);
-
-                // Normalize the vectors for entry/exit display
-                let magnitude1 = Math.sqrt(perpVector1.x * perpVector1.x + perpVector1.y * perpVector1.y);
-                let magnitude2 = Math.sqrt(perpVector2.x * perpVector2.x + perpVector2.y * perpVector2.y);
-                let normalizedPerpVector1 = new fabric.Point(perpVector1.x / magnitude1, perpVector1.y / magnitude1);
-                let normalizedPerpVector2 = new fabric.Point(perpVector2.x / magnitude2, perpVector2.y / magnitude2);
-
-                // Length of the arrow
-                let arrowLength = 30;
-
-                // Offset for arrow tip from midpoint
-                let arrowOffset = 10;
-
-                // Calculate the entry and exit points
-                let exitPoint = new fabric.Point(midPoint.x + normalizedPerpVector1.x * arrowLength, midPoint.y + normalizedPerpVector1.y * arrowLength);
-                let entryPoint = new fabric.Point(midPoint.x + normalizedPerpVector2.x * arrowLength, midPoint.y + normalizedPerpVector2.y * arrowLength);
-
-                // Draw the vectors on the canvas
-                let entryVector = new fabric.Polyline([{x: midPoint.x, y: midPoint.y}, {x: entryPoint.x, y: entryPoint.y}], {
-                  stroke: 'red',
-                  strokeWidth: 2,
-                  selectable: false
-                });
-                let exitVector = new fabric.Polyline([{x: midPoint.x, y: midPoint.y}, {x: exitPoint.x, y: exitPoint.y}], {
-                  stroke: 'red',
-                  strokeWidth: 2,
-                  selectable: false
-                });
-
-                // Add the text "Entry" and "Exit" next to the vectors
-                let entryText = new fabric.Text("Entry", {
-                  left: entryPoint.x,
-                  top: entryPoint.y,
-                  fontSize: 20,
-                  fill: 'red'
-                });
-                let exitText = new fabric.Text("Exit", {
-                  left: exitPoint.x,
-                  top: exitPoint.y,
-                  fontSize: 20,
-                  fill: 'red'
-                });
-
-                // Calculate positions for the arrowheads with offset
-                let adjustedEntryPoint = new fabric.Point(midPoint.x - normalizedPerpVector2.x * arrowOffset, midPoint.y - normalizedPerpVector2.y * arrowOffset);
-                let adjustedExitPoint = new fabric.Point(midPoint.x - normalizedPerpVector1.x * arrowOffset, midPoint.y - normalizedPerpVector1.y * arrowOffset);
-
-                // Add arrowheads to the vectors
-                let entryArrowAngle = Math.atan2(midPoint.y - entryPoint.y, midPoint.x - entryPoint.x) * (180 / Math.PI);
-                let entryArrowHead = new fabric.Triangle({
-                  left: adjustedExitPoint.x,
-                  top: adjustedExitPoint.y,
-                  originX: 'center',
-                  originY: 'center',
-                  angle: entryArrowAngle + 90, // Adjust the angle to point correctly
-                  width: 10,
-                  height: 15,
-                  fill: 'red'
-                });
-
-                let exitArrowAngle = Math.atan2(midPoint.y - exitPoint.y, midPoint.x - exitPoint.x) * (180 / Math.PI);
-                let exitArrowHead = new fabric.Triangle({
-                  left: adjustedEntryPoint.x,
-                  top: adjustedEntryPoint.y,
-                  originX: 'center',
-                  originY: 'center',
-                  angle: exitArrowAngle + 90, // Adjust the angle to point correctly
-                  width: 10,
-                  height: 15,
-                  fill: 'red'
-                });
-
-                // Create the entire group so that we can move the entire tripwire as a single entity
-                let tripwireGroup = new fabric.Group([tripwire, tripwireArrowHead, entryVector, exitVector, entryArrowHead, exitArrowHead, entryText, exitText], {
-                  selectable: true // Make the group selectable
-                });
-
-                // Add the group to the canvas
-                canvas.add(tripwireGroup);
+                canvas.add(makeTripwire(polygonPoints));
               } else if (isDrawing) {
                 isDrawing = false;
                 canvas.add(makePolygon(polygonPoints)).renderAll();
@@ -531,8 +450,112 @@
               polygonPoints.length = 0;
             }
 
+            function makeTripwire(polygonPoints) {
+              let tripwire = new fabric.Polygon(polygonPoints.slice(), {
+                strokeWidth: 3,
+                selectable: true,
+                stroke: 'green'
+              });
 
-//
+              let tripwireArrowAngle = Math.atan2(polygonPoints[1].y - polygonPoints[0].y, polygonPoints[1].x - polygonPoints[0].x) * (180 / Math.PI);
+              let tripwireArrowHead = new fabric.Triangle({
+                left: polygonPoints[1].x,
+                top: polygonPoints[1].y,
+                originX: 'center',
+                originY: 'center',
+                angle: tripwireArrowAngle + 90, // Adjust the angle to point correctly
+                width: 10,
+                height: 15,
+                fill: 'green'
+              });
+
+              // Calculate the middle point of the tripwire. This is going to be a reference point for the entry and exit vectors
+              let midPoint = new fabric.Point((polygonPoints[0].x + polygonPoints[1].x) / 2, (polygonPoints[0].y + polygonPoints[1].y) / 2);
+
+              // Calculate the direction vector from the start point to the end point
+              let dirVector = new fabric.Point(polygonPoints[1].x - polygonPoints[0].x, polygonPoints[1].y - polygonPoints[0].y);
+
+              // Calculate the perpendicular vectors to the direction vector (tripwire)
+              let perpVector1 = new fabric.Point(-dirVector.y, dirVector.x);
+              let perpVector2 = new fabric.Point(dirVector.y, -dirVector.x);
+
+              // Normalize the vectors for entry/exit display
+              let magnitude1 = Math.sqrt(perpVector1.x * perpVector1.x + perpVector1.y * perpVector1.y);
+              let magnitude2 = Math.sqrt(perpVector2.x * perpVector2.x + perpVector2.y * perpVector2.y);
+              let normalizedPerpVector1 = new fabric.Point(perpVector1.x / magnitude1, perpVector1.y / magnitude1);
+              let normalizedPerpVector2 = new fabric.Point(perpVector2.x / magnitude2, perpVector2.y / magnitude2);
+
+              // Length of the arrow
+              let arrowLength = 30;
+
+              // Offset for arrow tip from midpoint
+              let arrowOffset = 10;
+
+              // Calculate the entry and exit points
+              let exitPoint = new fabric.Point(midPoint.x + normalizedPerpVector1.x * arrowLength, midPoint.y + normalizedPerpVector1.y * arrowLength);
+              let entryPoint = new fabric.Point(midPoint.x + normalizedPerpVector2.x * arrowLength, midPoint.y + normalizedPerpVector2.y * arrowLength);
+
+              // Draw the vectors on the canvas
+              let entryVector = new fabric.Polyline([{x: midPoint.x, y: midPoint.y}, {x: entryPoint.x, y: entryPoint.y}], {
+                stroke: 'red',
+                strokeWidth: 2,
+                selectable: false
+              });
+              let exitVector = new fabric.Polyline([{x: midPoint.x, y: midPoint.y}, {x: exitPoint.x, y: exitPoint.y}], {
+                stroke: 'red',
+                strokeWidth: 2,
+                selectable: false
+              });
+
+              // Add the text "Entry" and "Exit" next to the vectors
+              let entryText = new fabric.Text("Entry", {
+                left: entryPoint.x,
+                top: entryPoint.y,
+                fontSize: 20,
+                fill: 'red'
+              });
+              let exitText = new fabric.Text("Exit", {
+                left: exitPoint.x,
+                top: exitPoint.y,
+                fontSize: 20,
+                fill: 'red'
+              });
+
+              // Calculate positions for the arrowheads with offset
+              let adjustedEntryPoint = new fabric.Point(midPoint.x - normalizedPerpVector2.x * arrowOffset, midPoint.y - normalizedPerpVector2.y * arrowOffset);
+              let adjustedExitPoint = new fabric.Point(midPoint.x - normalizedPerpVector1.x * arrowOffset, midPoint.y - normalizedPerpVector1.y * arrowOffset);
+
+              // Add arrowheads to the vectors
+              let entryArrowAngle = Math.atan2(midPoint.y - entryPoint.y, midPoint.x - entryPoint.x) * (180 / Math.PI);
+              let entryArrowHead = new fabric.Triangle({
+                left: adjustedExitPoint.x,
+                top: adjustedExitPoint.y,
+                originX: 'center',
+                originY: 'center',
+                angle: entryArrowAngle + 90, // Adjust the angle to point correctly
+                width: 10,
+                height: 15,
+                fill: 'red'
+              });
+
+              let exitArrowAngle = Math.atan2(midPoint.y - exitPoint.y, midPoint.x - exitPoint.x) * (180 / Math.PI);
+              let exitArrowHead = new fabric.Triangle({
+                left: adjustedEntryPoint.x,
+                top: adjustedEntryPoint.y,
+                originX: 'center',
+                originY: 'center',
+                angle: exitArrowAngle + 90, // Adjust the angle to point correctly
+                width: 10,
+                height: 15,
+                fill: 'red'
+              });
+
+              // Create the entire group so that we can move the entire tripwire as a single entity
+              return new fabric.Group([tripwire, tripwireArrowHead, entryVector, exitVector, entryArrowHead, exitArrowHead, entryText, exitText], {
+                selectable: true // Make the group selectable
+              });
+            }
+
             function makePolygon(polygonPoints) {
 
                 var left = fabric.util.array.min(polygonPoints, "x");
@@ -613,9 +636,13 @@
             }
         },
         oneditsave: function () {
-            this.json = JSON.stringify(collate(this.canvas, this.width, this.height));
-            var json = document.getElementById("node-input-json");
-            json.value = this.json;
+            this.regionsJson = JSON.stringify(collate(this.canvas, this.width, this.height, 'polygon'));
+            var textAreaRegionsJson = document.getElementById("node-input-regionsJson");
+            textAreaRegionsJson.value = this.regionsJson;
+
+            this.tripwiresJson = JSON.stringify(collate(this.canvas, this.width, this.height, 'group'));
+            var textAreaTripwiresJson = document.getElementById("node-input-tripwiresJson");
+            textAreaTripwiresJson.value = this.tripwiresJson;
 
             this.canvas = null;
         },

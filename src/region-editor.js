@@ -2,12 +2,14 @@ const isBase64 = require("is-base64");
 module.exports = function (RED) {
     "use strict";
 
-    function RegionEditor(n) {
-        RED.nodes.createNode(this, n);
+    function RegionEditor(config) {
+        RED.nodes.createNode(this, config);
         let node = this;
-        let json = n.json || '{}';
-        node.imageProp = n.imageProp || 'image';
-        node.imagePropType = n.imagePropType || 'msgPayload';
+
+        node.regionsJson = config.regionsJson;
+        node.tripwiresJson = config.tripwiresJson;
+        node.imageProp = config.imageProp;
+        node.imagePropType = config.imagePropType;
 
 
         function getImageFromMsg(msg) {
@@ -53,9 +55,11 @@ module.exports = function (RED) {
             if (image && validateImageFormat(image)) {
                 sendDataToClient(image, msg);
                 if (node.imagePropType === 'msg') {
-                    msg['regions'] = JSON.parse(json);
+                    msg['regions'] = JSON.parse(node.regionsJson);
+                    msg['tripwires'] = JSON.parse(node.tripwiresJson);
                 } else {
-                    msg.payload['regions'] = JSON.parse(json);
+                    msg.payload['regions'] = JSON.parse(node.regionsJson);
+                    msg.payload['tripwires'] = JSON.parse(node.tripwiresJson);
                 }
             } else {
                 node.error("Image is not in mime base64 encoded format!", msg);
