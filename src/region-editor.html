@@ -1,12 +1,12 @@
-<script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.2.4/fabric.min.js"
+<script crossorigin="anonymous"
         integrity="sha512-HkRNCiaZYxQAkHpLFYI90ObSzL0vaIXL8Xe3bM51vhdYI79RDFMLTAsmVH1xVPREmTlUWexgrQMk+c3RBTsLGw=="
-        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+        referrerpolicy="no-referrer" src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.2.4/fabric.min.js"></script>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.21/lodash.min.js"
+<script crossorigin="anonymous"
         integrity="sha512-WFN04846sdKMIP5LKNphMaWzU7YpMyCU245etK3g/2ARYbPK9Ub18eG+ljU96qKRCWh+quCY7yefSmlkQw1ANQ=="
-        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+        referrerpolicy="no-referrer" src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.21/lodash.min.js"></script>
 
-<script type="text/html" data-template-name="region-editor">
+<script data-template-name="region-editor" type="text/html">
     <div className="form-row">
         <label htmlFor="node-input-name"><i class="fa fa-tag"></i> Name</label>
         <input type="text" id="node-input-name" placeholder="Name">
@@ -17,31 +17,21 @@
         <input type="hidden" id="node-input-imagePropType">
     </div>
     <hr align="middle"/>
-    <!--    <div className="form-row">-->
-    <!--        <label htmlFor="node-input-zoom"><i className="fa fa-tag"></i> Zoom</label>-->
-    <!--        <input lass="red-ui-typedInput-container" id="node-input-zoom" style="width:100%" type="range" name="zoom" min="5" max="40">-->
-    <!--    </div>-->
     <div className="form-row">
         <label htmlFor="node-canvas"><i class="fa fa-tag"></i> Canvas</label>
         <ul id="node-canvas" style="display:inline-block">
             <li id="add" class="red-ui-typedInput-container"
-                style="display:inline-block;padding:5px 10px;margin-right:-1px;cursor:pointer"><i class="fa fa-plus"
-                                                                                                  title="New poly"></i>
-                <!--            <li id="pencil" class="red-ui-typedInput-container" style="display:inline-block;padding:5px 10px;margin-right:-1px;cursor:pointer"><i class="fa fa-pencil" title="L: Line"></i>-->
-                <!--            <li id="arrows" class="red-ui-typedInput-container" style="display:inline-block;padding:5px 10px;margin-right:-1px;cursor:pointer"><i class="fa fa-arrows" title="M: Move"></i>-->
+                style="display:inline-block;padding:5px 10px;margin-right:-1px;cursor:pointer"><i
+                    class="fa fa-area-chart" title="New poly"></i>
+            <li id="add-tripwire" class="red-ui-typedInput-container"
+                style="display:inline-block;padding:5px 10px;margin-right:-1px;cursor:pointer"><i
+                    class="fa fa-arrow-right " title="New tripwire"></i>
             <li id="edit" class="red-ui-typedInput-container"
                 style="display:inline-block;padding:5px 10px;margin-right:-1px;cursor:pointer"><i class="fa fa-edit"
                                                                                                   title="Edit selected poly"></i>
-                <!--            <li id="plus" class="red-ui-typedInput-container" style="display:inline-block;padding:5px 10px;margin-right:-1px;cursor:pointer"><i class="fa fa-plus" title="A: Add"></i>-->
-                <!--            <li id="scissors" class="red-ui-typedInput-container" style="display:inline-block;padding:5px 10px;margin-right:-1px;cursor:pointer"><i class="fa fa-scissors" title="C: Cut"></i>-->
-                <!--            <li id="crosshairs" class="red-ui-typedInput-container" style="display:inline-block;padding:5px 10px;margin-right:-1px;cursor:pointer"><i class="fa fa-crosshairs" title="O: Change Origin"></i>-->
-                <!--            <li id="eye-slash" class="red-ui-typedInput-container" style="display:inline-block;padding:5px 10px;margin-right:-1px;cursor:pointer"><i class="fa fa-eye-slash" title="V: Toggle Visibility"></i>-->
-                <!--            <li id="anchor" class="red-ui-typedInput-container" style="display:inline-block;padding:5px 10px;margin-right:-1px;cursor:pointer"><i class="fa fa-anchor" title="S: Toggle Grid Snap"></i>-->
             </li>
         </ul>
         <ul style="display:inline-block">
-            <!--            <li id="undo" class="red-ui-typedInput-container" style="display:inline-block;padding:5px 10px;margin-right:-1px;cursor:pointer"><i class="fa fa-undo" title="U: Undo"></i>-->
-            <!--            <li id="redo" class="red-ui-typedInput-container" style="display:inline-block;padding:5px 10px;margin-right:-1px;cursor:pointer"><i class="fa fa-repeat" title="R: Redo"></i>-->
             <li id="trash" class="red-ui-typedInput-container"
                 style="display:inline-block;padding:5px 10px;margin-right:-1px;cursor:pointer"><i class="fa fa-trash-o"
                                                                                                   title="Delete All"></i>
@@ -59,12 +49,16 @@
         </div>
     </div>
     <div className="form-row">
-        <label htmlFor="node-input-json"><i class="fa fa-tag"></i> JSON</label>
-        <textarea id="node-input-json" style="width:800px" placeholder="[]" readonly/>
+        <label htmlFor="node-input-regionsJson"><i class="fa fa-tag"></i> Regions JSON</label>
+        <textarea id="node-input-regionsJson" style="width:800px" placeholder="[]" readonly></textarea>
+    </div>
+    <div className="form-row">
+        <label htmlFor="node-input-tripwiresJson"><i class="fa fa-tag"></i> Tripwires JSON</label>
+        <textarea id="node-input-tripwiresJson" style="width:800px" placeholder="[]" readonly></textarea>
     </div>
 </script>
 
-<script type="text/html" data-help-name="region-editor">
+<script data-help-name="region-editor" type="text/html">
     <p>
         Draw regions in an image.
     </p>
@@ -112,7 +106,7 @@
 }
     </code></pre>
 </script>
-<script type="text/html" data-template-name="region-editor">
+<script data-template-name="region-editor" type="text/html">
     $("#node-input-example1").typedInput({
     type:"str",
     types:["str","num","bool"],
@@ -120,388 +114,536 @@
     })
 </script>
 <script type="text/javascript">
-    function fromRelative(point, width, height) {
-        return {
-            x: point.x * width,
-            y: point.y * height
-        };
-    }
+  function fromRelative(point, width, height) {
+    return {
+      x: point.x * width,
+      y: point.y * height
+    };
+  }
 
-    function toRelative(point, width, height) {
-        return {
-            x: point.x / parseFloat(width),
-            y: point.y / parseFloat(height)
-        };
-    }
+  function toRelative(point, width, height) {
+    return {
+      x: point.x / parseFloat(width),
+      y: point.y / parseFloat(height)
+    };
+  }
 
-    function collate(canvas, width, height) {
-        let objects = canvas.getObjects();
-        let objectsCount = canvas.getObjects().length;
-        let polygons = [];
-        for (var i = 0, len = objectsCount; i < len; i++) {
-            var matrix = objects[i].calcTransformMatrix();
-            let poly = [];
-            var transformedPoints = objects[i].get("points")
-                .map(function (p) {
-                    return new fabric.Point(
-                        p.x - objects[i].pathOffset.x,
-                        p.y - objects[i].pathOffset.y);
-                })
-                .map(function (p) {
-                    return fabric.util.transformPoint(p, matrix);
-                });
+  function collate(canvas, width, height, type) {
+    let objects = canvas.getObjects().filter(obj => obj.type === type);
+    let objectsCount = objects.length;
+    let polygons = [];
+    for (var i = 0; i < objectsCount; i++) {
+      var matrix = objects[i].calcTransformMatrix();
+      let poly = [];
 
-            transformedPoints.map(function (p) {
-                var pt = {
-                    x: p.x,
-                    y: p.y
-                };
-
-                poly.push(pt);
-            })
-
-            // Make unique coordinates
-            polygons[i] = _.uniqWith(poly, _.isEqual);
+      // the case for tripwires
+      if (objects[i].type === 'group') {
+        // the main tripwire line is contained in a group object as a polygon
+        let polygonObj = objects[i].getObjects().find(obj => obj.type === 'polygon');
+        if (polygonObj) {
+          poly = transformPoints(polygonObj, matrix);
         }
+      } else {
+        poly = transformPoints(objects[i], matrix);
+      }
 
-        let relativePolygons = [];
-        for (let i = 0; i < polygons.length; i++) {
-            let polygon = polygons[i]
-            let relativePolygon = [];
-            for (let i = 0; i < polygon.length; i++) {
-                relativePolygon.push(toRelative(polygon[i], width, height));
-            }
-            relativePolygons.push(relativePolygon);
-        }
-
-        return relativePolygons;
+      // Make unique coordinates
+      polygons[i] = _.uniqWith(poly, _.isEqual);
     }
 
-    RED.comms.subscribe('region-editor', function (event, msg) {
-        let node = RED.nodes.node(msg.id);
-        // console.log(msg);
-        node.background = msg.data;
-    });
+    let relativePolygons = [];
+    for (let i = 0; i < polygons.length; i++) {
+      let polygon = polygons[i]
+      let relativePolygon = [];
+      for (let i = 0; i < polygon.length; i++) {
+        relativePolygon.push(toRelative(polygon[i], width, height));
+      }
+      relativePolygons.push(relativePolygon);
+    }
 
-    RED.nodes.registerType('region-editor', {
-        category: 'visualize',
-        color: '#F3B567',
-        defaults: {
-            name: {value: ''},
-            json: {value: '[]', required: true},
-            background: {value: null, required: false},
-            imageProp: {value: 'image', required: false},
-            imagePropType: {value: 'msgPayload'}
-        },
-        inputs: 1,
-        outputs: 1,
-        icon: 'tn_dark.svg',
-        label: function () {
-            return this.name || 'region editor';
-        },
-        labelStyle: function () {
-            return this.name ? "node_label_italic" : "";
-        },
-        oneditprepare: function () {
-            const msgPayload = {
-                value: "msgPayload",
-                label: "msg.payload."
-            };
-            const msgEvent = {
-                value: "msgEvent",
-                label: "msg.payload.event."
-            };
-            $("#node-input-imageProp").typedInput({
-                default: "msgPayload",
-                types: ['msg', msgPayload, msgEvent],
-                typeField: "#node-input-imagePropType"
-            });
-            if (!$("#node-input-imageProp").typedInput('value').length) {
-                $("#node-input-imageProp").typedInput('type', 'msgEvent');
-                $("#node-input-imageProp").typedInput('value', 'image');
-            }
+    return relativePolygons;
+  }
+
+  function transformPoints(polygon, matrix) {
+    var transformedPoints = polygon.get("points")
+      .map(function (p) {
+        return new fabric.Point(
+          p.x - polygon.pathOffset.x,
+          p.y - polygon.pathOffset.y);
+      })
+      .map(function (p) {
+        return fabric.util.transformPoint(p, matrix);
+      });
+
+    let poly = []
+    transformedPoints.map(function (p) {
+      var pt = {
+        x: p.x,
+        y: p.y
+      };
+
+      poly.push(pt);
+    })
+
+    return poly;
+  }
+
+  RED.comms.subscribe('region-editor', function (event, msg) {
+    let node = RED.nodes.node(msg.id);
+    node.background = msg.data;
+  });
+
+  RED.nodes.registerType('region-editor', {
+    category: 'visualize',
+    color: '#F3B567',
+    defaults: {
+      name: {value: ''},
+      json: {value: '[]', required: true},
+      regionsJson: {value: '[]', required: true},
+      tripwiresJson: {value: '[]', required: true},
+      background: {value: null, required: false},
+      imageProp: {value: 'image', required: false},
+      imagePropType: {value: 'msgPayload'}
+    },
+    inputs: 1,
+    outputs: 1,
+    icon: 'tn_dark.svg',
+    label: function () {
+      return this.name || 'region editor';
+    },
+    labelStyle: function () {
+      return this.name ? "node_label_italic" : "";
+    },
+    oneditprepare: function () {
+      const msgPayload = {
+        value: "msgPayload",
+        label: "msg.payload."
+      };
+      const msgEvent = {
+        value: "msgEvent",
+        label: "msg.payload.event."
+      };
+      $("#node-input-imageProp").typedInput({
+        default: "msgPayload",
+        types: ['msg', msgPayload, msgEvent],
+        typeField: "#node-input-imagePropType"
+      });
+      if (!$("#node-input-imageProp").typedInput('value').length) {
+        $("#node-input-imageProp").typedInput('type', 'msgEvent');
+        $("#node-input-imageProp").typedInput('value', 'image');
+      }
 // canvas Drawing
-            var node = this;
-            var background = node.background || 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAIAQMAAAD+wSzIAAAABlBMVEX///+/v7+jQ3Y5AAAADklEQVQI12P4AIX8EAgALgAD/aNpbtEAAAAASUVORK5CYII';
-            var json = node.json || '[]';
-            var polygonPoints = [];
-            var lines = [];
-            var isDrawing = false;
-            if (!node.canvas) {
-                node.canvas = new fabric.Canvas('polyCanvas')
-            }
-            let canvas = node.canvas;
-            node.width = node.width || 800;
-            node.height = node.height || 600;
-            let width = node.width;
-            let height = node.height;
+      var node = this;
+      var background = node.background || 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAIAQMAAAD+wSzIAAAABlBMVEX///+/v7+jQ3Y5AAAADklEQVQI12P4AIX8EAgALgAD/aNpbtEAAAAASUVORK5CYII';
+      var regionsJson = node.regionsJson || '[]';
+      var tripwiresJson = node.tripwiresJson || '[]';
+      var polygonPoints = [];
+      var lines = [];
+      var isDrawing = false;
+      var isDrawingTripWire = false;
+      if (!node.canvas) {
+        node.canvas = new fabric.Canvas('polyCanvas')
+      }
+      let canvas = node.canvas;
+      node.width = node.width || 800;
+      node.height = node.height || 600;
+      let width = node.width;
+      let height = node.height;
 
-            const img = new Image(background);
-            img.src = background;
-            img.onload = function () {
-                node.width = width = img.naturalWidth;
-                node.height = height = img.naturalHeight;
+      const img = new Image(background);
+      img.src = background;
+      img.onload = function () {
+        node.width = width = img.naturalWidth;
+        node.height = height = img.naturalHeight;
 
-                canvas.setDimensions({width: width, height: height});
-                canvas.setBackgroundImage(background, canvas.renderAll.bind(canvas));
+        canvas.setDimensions({width: width, height: height});
+        canvas.setBackgroundImage(background, canvas.renderAll.bind(canvas));
 
-                let polygons = JSON.parse(json);
-                for (let i = 0, len = polygons.length; i < len; i++) {
-                    let relativePolygon = polygons[i];
-                    let polygon = [];
-                    for (let j = 0; j < relativePolygon.length; j++) {
-                        polygon.push(fromRelative(relativePolygon[j], width, height));
-                    }
-                    canvas.add(makePolygon(polygon));
-                }
-            }
-
-            //
-            document.getElementById("add").onclick = function () {
-                if (isDrawing) {
-                    finalize();
-                } else {
-                    isDrawing = true;
-                }
-            };
-
-            //
-            document.getElementById("edit").onclick = function () {
-                if (!canvas.getActiveObject()) {
-                    return;
-                }
-
-                var poly = canvas.getActiveObject();
-                canvas.setActiveObject(poly);
-                poly.edit = !poly.edit;
-                if (poly.edit) {
-                    var lastControl = poly.points.length - 1;
-                    poly.cornerStyle = 'circle';
-                    poly.cornerColor = 'rgba(0,0,255,0.5)';
-                    poly.controls = poly.points.reduce(function (acc, point, index) {
-                        acc['p' + index] = new fabric.Control({
-                            positionHandler: polygonPositionHandler,
-                            actionHandler: anchorWrapper(index > 0 ? index - 1 : lastControl, actionHandler),
-                            actionName: 'modifyPolygon',
-                            pointIndex: index
-                        });
-                        return acc;
-                    }, {});
-                } else {
-                    poly.cornerColor = 'blue';
-                    poly.cornerStyle = 'rect';
-                    poly.controls = fabric.Object.prototype.controls;
-                }
-                poly.hasBorders = !poly.edit;
-                canvas.requestRenderAll();
-            }
-
-            //
-            document.getElementById("trash").onclick = function () {
-                if (!canvas.getActiveObject()) {
-                    return;
-                }
-
-                var poly = canvas.getActiveObject();
-                canvas.remove(poly);
-            };
-
-            //
-            fabric.util.addListener(window, "dblclick", function () {
-                if (isDrawing) {
-                    finalize();
-                }
-            });
-
-//
-            fabric.util.addListener(window, "keyup", function (evt) {
-                if (evt.which === 13 && isDrawing) {
-                    finalize();
-                }
-            });
-
-            canvas.on('mouse:down', function (evt) {
-                if (evt.e.altKey === true) {
-                    this.isDragging = true;
-                    this.selection = false;
-                    this.lastPosX = evt.e.clientX;
-                    this.lastPosY = evt.e.clientY;
-                }
-                if (isDrawing) {
-                    var _mouse = this.getPointer(evt.e);
-                    var _x = _mouse.x;
-                    var _y = _mouse.y;
-                    var line = new fabric.Line([_x, _y, _x, _y], {
-                        strokeWidth: 1,
-                        selectable: false,
-                        stroke: 'red'
-                    });
-
-                    polygonPoints.push(new fabric.Point(_x, _y));
-                    lines.push(line);
-
-                    this.add(line);
-                    this.selection = false;
-                }
-
-                // var json = document.getElementById("node-input-json");
-                // json.value = JSON.stringify(collate(this));
-            });
-
-            canvas.on('mouse:up', function (evt) {
-                // on mouse up we want to recalculate new interaction
-                // for all objects, so we call setViewportTransform
-                this.setViewportTransform(this.viewportTransform);
-                if (this.isDragging) {
-                    this.isDragging = false;
-                    this.selection = true;
-                }
-
-                // var json = document.getElementById("node-input-json");
-                // json.value = JSON.stringify(collate(this));
-            });
-
-            canvas.on('mouse:move', function (evt) {
-                if (this.isDragging) {
-                    var e = evt.e;
-                    var vpt = this.viewportTransform;
-                    vpt[4] += e.clientX - this.lastPosX;
-                    vpt[5] += e.clientY - this.lastPosY;
-                    this.requestRenderAll();
-                    this.lastPosX = e.clientX;
-                    this.lastPosY = e.clientY;
-                }
-                if (lines.length && isDrawing) {
-                    var _mouse = this.getPointer(evt.e);
-                    lines[lines.length - 1].set({
-                        x2: _mouse.x,
-                        y2: _mouse.y
-                    }).setCoords();
-                    this.renderAll();
-                }
-
-                // var json = document.getElementById("node-input-json");
-                // json.value = JSON.stringify(collate(this));
-            });
-
-            canvas.on('mouse:wheel', function (opt) {
-                var delta = opt.e.deltaY;
-                var zoom = canvas.getZoom();
-                zoom *= 0.999 ** delta;
-                if (zoom > 20) zoom = 20;
-                if (zoom < 0.01) zoom = 0.01;
-                canvas.zoomToPoint({
-                    x: opt.e.offsetX,
-                    y: opt.e.offsetY
-                }, zoom);
-                opt.e.preventDefault();
-                opt.e.stopPropagation();
-            });
-
-//
-            function finalize() {
-                isDrawing = false;
-
-                lines.forEach(function (line) {
-                    canvas.remove(line);
-                });
-
-                canvas.add(makePolygon(polygonPoints)).renderAll();
-                canvas.selection = true;
-                lines.length = 0;
-                polygonPoints.length = 0;
-            }
-
-
-//
-            function makePolygon(polygonPoints) {
-
-                var left = fabric.util.array.min(polygonPoints, "x");
-                var top = fabric.util.array.min(polygonPoints, "y");
-
-                polygonPoints.push(new fabric.Point(polygonPoints[0].x, polygonPoints[0].y));
-
-                return new fabric.Polygon(polygonPoints.slice(), {
-                    left: left,
-                    top: top,
-                    objectCaching: false,
-                    fill: 'rgba(255,0,0,.5)',
-                    stroke: 'black'
-                });
-            }
-
-// define a function that can locate the controls.
-// this function will be used both for drawing and for interaction.
-            function polygonPositionHandler(dim, finalMatrix, fabricObject) {
-                var x = (fabricObject.points[this.pointIndex].x - fabricObject.pathOffset.x),
-                    y = (fabricObject.points[this.pointIndex].y - fabricObject.pathOffset.y);
-                return fabric.util.transformPoint({
-                        x: x,
-                        y: y
-                    },
-                    fabric.util.multiplyTransformMatrices(
-                        fabricObject.canvas.viewportTransform,
-                        fabricObject.calcTransformMatrix()
-                    )
-                );
-            }
-
-            function getObjectSizeWithStroke(object) {
-                var stroke = new fabric.Point(
-                    object.strokeUniform ? 1 / object.scaleX : 1,
-                    object.strokeUniform ? 1 / object.scaleY : 1
-                ).multiply(object.strokeWidth);
-                return new fabric.Point(object.width + stroke.x, object.height + stroke.y);
-            }
-
-// define a function that will define what the control does
-// this function will be called on every mouse move after a control has been
-// clicked and is being dragged.
-// The function receive as argument the mouse event, the current trasnform object
-// and the current position in canvas coordinate
-// transform.target is a reference to the current object being transformed,
-            function actionHandler(eventData, transform, x, y) {
-                var polygon = transform.target,
-                    currentControl = polygon.controls[polygon.__corner],
-                    mouseLocalPosition = polygon.toLocalPoint(new fabric.Point(x, y), 'center', 'center'),
-                    polygonBaseSize = getObjectSizeWithStroke(polygon),
-                    size = polygon._getTransformedDimensions(0, 0),
-                    finalPointPosition = {
-                        x: mouseLocalPosition.x * polygonBaseSize.x / size.x + polygon.pathOffset.x,
-                        y: mouseLocalPosition.y * polygonBaseSize.y / size.y + polygon.pathOffset.y
-                    };
-                polygon.points[currentControl.pointIndex] = finalPointPosition;
-                return true;
-            }
-
-// define a function that can keep the polygon in the same position when we change its
-// width/height/top/left.
-            function anchorWrapper(anchorIndex, fn) {
-                return function (eventData, transform, x, y) {
-                    var fabricObject = transform.target,
-                        absolutePoint = fabric.util.transformPoint({
-                            x: (fabricObject.points[anchorIndex].x - fabricObject.pathOffset.x),
-                            y: (fabricObject.points[anchorIndex].y - fabricObject.pathOffset.y),
-                        }, fabricObject.calcTransformMatrix()),
-                        actionPerformed = fn(eventData, transform, x, y),
-                        newDim = fabricObject._setPositionDimensions({}),
-                        polygonBaseSize = getObjectSizeWithStroke(fabricObject),
-                        newX = (fabricObject.points[anchorIndex].x - fabricObject.pathOffset.x) / polygonBaseSize.x,
-                        newY = (fabricObject.points[anchorIndex].y - fabricObject.pathOffset.y) / polygonBaseSize.y;
-                    fabricObject.setPositionByOrigin(absolutePoint, newX + 0.5, newY + 0.5);
-                    return actionPerformed;
-                }
-            }
-        },
-        oneditsave: function () {
-            this.json = JSON.stringify(collate(this.canvas, this.width, this.height));
-            var json = document.getElementById("node-input-json");
-            json.value = this.json;
-
-            this.canvas = null;
-        },
-        oneditcancel: function() {
-            this.canvas = null;
+        let regions = JSON.parse(regionsJson);
+        for (let i = 0, len = regions.length; i < len; i++) {
+          let relativePolygon = regions[i];
+          let polygon = [];
+          for (let j = 0; j < relativePolygon.length; j++) {
+            polygon.push(fromRelative(relativePolygon[j], width, height));
+          }
+          canvas.add(makePolygon(polygon));
         }
-    });
+
+        let tripwires = JSON.parse(tripwiresJson);
+        for (let i = 0, len = tripwires.length; i < len; i++) {
+          let relativeTripwire = tripwires[i];
+          let polygon = [];
+          for (let j = 0; j < relativeTripwire.length; j++) {
+            polygon.push(fromRelative(relativeTripwire[j], width, height));
+          }
+          canvas.add(makeTripwire(polygon));
+        }
+      }
+
+      document.getElementById("add").onclick = function () {
+        if (isDrawing) {
+          finalize();
+        } else {
+          isDrawing = true;
+        }
+      };
+
+      document.getElementById("add-tripwire").onclick = function () {
+        if (isDrawingTripWire) {
+          finalize();
+        } else {
+          isDrawingTripWire = true;
+
+          // reset the polygon drawing state
+          isDrawing = false;
+          polygonPoints.length = 0;
+          lines.length = 0;
+        }
+      };
+
+      document.getElementById("edit").onclick = function () {
+        if (!canvas.getActiveObject()) {
+          return;
+        }
+
+        var poly = canvas.getActiveObject();
+        canvas.setActiveObject(poly);
+        poly.edit = !poly.edit;
+        if (poly.edit) {
+          var lastControl = poly.points.length - 1;
+          poly.cornerStyle = 'circle';
+          poly.cornerColor = 'rgba(0,0,255,0.5)';
+          poly.controls = poly.points.reduce(function (acc, point, index) {
+            acc['p' + index] = new fabric.Control({
+              positionHandler: polygonPositionHandler,
+              actionHandler: anchorWrapper(index > 0 ? index - 1 : lastControl, actionHandler),
+              actionName: 'modifyPolygon',
+              pointIndex: index
+            });
+            return acc;
+          }, {});
+        } else {
+          poly.cornerColor = 'blue';
+          poly.cornerStyle = 'rect';
+          poly.controls = fabric.Object.prototype.controls;
+        }
+        poly.hasBorders = !poly.edit;
+        canvas.requestRenderAll();
+      }
+
+      document.getElementById("trash").onclick = function () {
+        if (!canvas.getActiveObject()) {
+          return;
+        }
+
+        var poly = canvas.getActiveObject();
+        canvas.remove(poly);
+      };
+
+      fabric.util.addListener(window, "dblclick", function () {
+        if (isDrawing) {
+          finalize();
+        }
+      });
+
+      fabric.util.addListener(window, "keyup", function (evt) {
+        if (evt.which === 13 && isDrawing) {
+          finalize();
+        }
+      });
+
+      canvas.on('mouse:down', function (evt) {
+        if (evt.e.altKey === true) {
+          this.isDragging = true;
+          this.selection = false;
+          this.lastPosX = evt.e.clientX;
+          this.lastPosY = evt.e.clientY;
+        }
+        if (isDrawing || isDrawingTripWire) {
+          var _mouse = this.getPointer(evt.e);
+          var _x = _mouse.x;
+          var _y = _mouse.y;
+          var line = new fabric.Line([_x, _y, _x, _y], {
+            strokeWidth: 1,
+            selectable: false,
+            stroke: isDrawing ? 'red' : 'green'
+          });
+
+          polygonPoints.push(new fabric.Point(_x, _y));
+          lines.push(line);
+
+          this.add(line);
+          this.selection = false;
+
+          // finalize the drawing for tripwire if we have 2 points
+          if (isDrawingTripWire && polygonPoints.length === 2) {
+            finalize();
+          }
+        }
+      });
+
+      canvas.on('mouse:up', function (evt) {
+        // on mouse up we want to recalculate new interaction
+        // for all objects, so we call setViewportTransform
+        this.setViewportTransform(this.viewportTransform);
+        if (this.isDragging) {
+          this.isDragging = false;
+          this.selection = true;
+        }
+      });
+
+      canvas.on('mouse:move', function (evt) {
+        if (this.isDragging) {
+          var e = evt.e;
+          var vpt = this.viewportTransform;
+          vpt[4] += e.clientX - this.lastPosX;
+          vpt[5] += e.clientY - this.lastPosY;
+          this.requestRenderAll();
+          this.lastPosX = e.clientX;
+          this.lastPosY = e.clientY;
+        }
+        if (lines.length && (isDrawing || isDrawingTripWire)) {
+          var _mouse = this.getPointer(evt.e);
+          lines[lines.length - 1].set({
+            x2: _mouse.x,
+            y2: _mouse.y
+          }).setCoords();
+          this.renderAll();
+        }
+      });
+
+      canvas.on('mouse:wheel', function (opt) {
+        var delta = opt.e.deltaY;
+        var zoom = canvas.getZoom();
+        zoom *= 0.999 ** delta;
+        if (zoom > 20) zoom = 20;
+        if (zoom < 0.01) zoom = 0.01;
+        canvas.zoomToPoint({
+          x: opt.e.offsetX,
+          y: opt.e.offsetY
+        }, zoom);
+        opt.e.preventDefault();
+        opt.e.stopPropagation();
+      });
+
+      function finalize() {
+        if (isDrawingTripWire) {
+          isDrawingTripWire = false;
+          canvas.add(makeTripwire(polygonPoints));
+        } else if (isDrawing) {
+          isDrawing = false;
+          canvas.add(makePolygon(polygonPoints)).renderAll();
+        }
+
+        canvas.selection = true;
+
+        lines.forEach(function (line) {
+          canvas.remove(line);
+        });
+
+        lines.length = 0;
+        polygonPoints.length = 0;
+      }
+
+      function makeTripwire(polygonPoints) {
+        let tripwire = new fabric.Polygon(polygonPoints.slice(), {
+          strokeWidth: 3,
+          selectable: true,
+          stroke: 'green'
+        });
+
+        let tripwireArrowAngle = Math.atan2(polygonPoints[1].y - polygonPoints[0].y, polygonPoints[1].x - polygonPoints[0].x) * (180 / Math.PI);
+        let tripwireArrowHead = new fabric.Triangle({
+          left: polygonPoints[1].x,
+          top: polygonPoints[1].y,
+          originX: 'center',
+          originY: 'center',
+          angle: tripwireArrowAngle + 90, // Adjust the angle to point correctly
+          width: 10,
+          height: 15,
+          fill: 'green'
+        });
+
+        // Calculate the middle point of the tripwire. This is going to be a reference point for the entry and exit vectors
+        let midPoint = new fabric.Point((polygonPoints[0].x + polygonPoints[1].x) / 2, (polygonPoints[0].y + polygonPoints[1].y) / 2);
+
+        // Calculate the direction vector from the start point to the end point
+        let dirVector = new fabric.Point(polygonPoints[1].x - polygonPoints[0].x, polygonPoints[1].y - polygonPoints[0].y);
+
+        // Calculate the perpendicular vectors to the direction vector (tripwire)
+        let perpVector1 = new fabric.Point(-dirVector.y, dirVector.x);
+        let perpVector2 = new fabric.Point(dirVector.y, -dirVector.x);
+
+        // Normalize the vectors for entry/exit display
+        let magnitude1 = Math.sqrt(perpVector1.x * perpVector1.x + perpVector1.y * perpVector1.y);
+        let magnitude2 = Math.sqrt(perpVector2.x * perpVector2.x + perpVector2.y * perpVector2.y);
+        let normalizedPerpVector1 = new fabric.Point(perpVector1.x / magnitude1, perpVector1.y / magnitude1);
+        let normalizedPerpVector2 = new fabric.Point(perpVector2.x / magnitude2, perpVector2.y / magnitude2);
+
+        // Length of the arrow
+        let arrowLength = 30;
+
+        // Offset for arrow tip from midpoint
+        let arrowOffset = 10;
+
+        // Calculate the entry and exit points
+        let exitPoint = new fabric.Point(midPoint.x + normalizedPerpVector1.x * arrowLength, midPoint.y + normalizedPerpVector1.y * arrowLength);
+        let entryPoint = new fabric.Point(midPoint.x + normalizedPerpVector2.x * arrowLength, midPoint.y + normalizedPerpVector2.y * arrowLength);
+
+        // Draw the vectors on the canvas
+        let entryVector = new fabric.Polyline([{x: midPoint.x, y: midPoint.y}, {x: entryPoint.x, y: entryPoint.y}], {
+          stroke: 'red',
+          strokeWidth: 2,
+          selectable: false
+        });
+        let exitVector = new fabric.Polyline([{x: midPoint.x, y: midPoint.y}, {x: exitPoint.x, y: exitPoint.y}], {
+          stroke: 'red',
+          strokeWidth: 2,
+          selectable: false
+        });
+
+        // Add the text "Entry" and "Exit" next to the vectors
+        let entryText = new fabric.Text("Entry", {
+          left: entryPoint.x,
+          top: entryPoint.y,
+          fontSize: 20,
+          fill: 'red'
+        });
+        let exitText = new fabric.Text("Exit", {
+          left: exitPoint.x,
+          top: exitPoint.y,
+          fontSize: 20,
+          fill: 'red'
+        });
+
+        // Calculate positions for the arrowheads with offset
+        let adjustedEntryPoint = new fabric.Point(midPoint.x - normalizedPerpVector2.x * arrowOffset, midPoint.y - normalizedPerpVector2.y * arrowOffset);
+        let adjustedExitPoint = new fabric.Point(midPoint.x - normalizedPerpVector1.x * arrowOffset, midPoint.y - normalizedPerpVector1.y * arrowOffset);
+
+        // Add arrowheads to the vectors
+        let entryArrowAngle = Math.atan2(midPoint.y - entryPoint.y, midPoint.x - entryPoint.x) * (180 / Math.PI);
+        let entryArrowHead = new fabric.Triangle({
+          left: adjustedExitPoint.x,
+          top: adjustedExitPoint.y,
+          originX: 'center',
+          originY: 'center',
+          angle: entryArrowAngle + 90, // Adjust the angle to point correctly
+          width: 10,
+          height: 15,
+          fill: 'red'
+        });
+
+        let exitArrowAngle = Math.atan2(midPoint.y - exitPoint.y, midPoint.x - exitPoint.x) * (180 / Math.PI);
+        let exitArrowHead = new fabric.Triangle({
+          left: adjustedEntryPoint.x,
+          top: adjustedEntryPoint.y,
+          originX: 'center',
+          originY: 'center',
+          angle: exitArrowAngle + 90, // Adjust the angle to point correctly
+          width: 10,
+          height: 15,
+          fill: 'red'
+        });
+
+        // Create the entire group so that we can move the entire tripwire as a single entity
+        return new fabric.Group([tripwire, tripwireArrowHead, entryVector, exitVector, entryArrowHead, exitArrowHead, entryText, exitText], {
+          selectable: true // Make the group selectable
+        });
+      }
+
+      function makePolygon(polygonPoints) {
+
+        var left = fabric.util.array.min(polygonPoints, "x");
+        var top = fabric.util.array.min(polygonPoints, "y");
+
+        polygonPoints.push(new fabric.Point(polygonPoints[0].x, polygonPoints[0].y));
+
+        return new fabric.Polygon(polygonPoints.slice(), {
+          left: left,
+          top: top,
+          objectCaching: false,
+          fill: 'rgba(255,0,0,.5)',
+          stroke: 'black'
+        });
+      }
+
+      // define a function that can locate the controls.
+      // this function will be used both for drawing and for interaction.
+      function polygonPositionHandler(dim, finalMatrix, fabricObject) {
+        var x = (fabricObject.points[this.pointIndex].x - fabricObject.pathOffset.x),
+          y = (fabricObject.points[this.pointIndex].y - fabricObject.pathOffset.y);
+        return fabric.util.transformPoint({
+            x: x,
+            y: y
+          },
+          fabric.util.multiplyTransformMatrices(
+            fabricObject.canvas.viewportTransform,
+            fabricObject.calcTransformMatrix()
+          )
+        );
+      }
+
+      function getObjectSizeWithStroke(object) {
+        var stroke = new fabric.Point(
+          object.strokeUniform ? 1 / object.scaleX : 1,
+          object.strokeUniform ? 1 / object.scaleY : 1
+        ).multiply(object.strokeWidth);
+
+        return new fabric.Point(object.width + stroke.x, object.height + stroke.y);
+      }
+
+      // define a function that will define what the control does
+      // this function will be called on every mouse move after a control has been
+      // clicked and is being dragged.
+      // The function receive as argument the mouse event, the current trasnform object
+      // and the current position in canvas coordinate
+      // transform.target is a reference to the current object being transformed,
+      function actionHandler(eventData, transform, x, y) {
+        var polygon = transform.target,
+          currentControl = polygon.controls[polygon.__corner],
+          mouseLocalPosition = polygon.toLocalPoint(new fabric.Point(x, y), 'center', 'center'),
+          polygonBaseSize = getObjectSizeWithStroke(polygon),
+          size = polygon._getTransformedDimensions(0, 0),
+          finalPointPosition = {
+            x: mouseLocalPosition.x * polygonBaseSize.x / size.x + polygon.pathOffset.x,
+            y: mouseLocalPosition.y * polygonBaseSize.y / size.y + polygon.pathOffset.y
+          };
+        polygon.points[currentControl.pointIndex] = finalPointPosition;
+        return true;
+      }
+
+      // define a function that can keep the polygon in the same position when we change its
+      // width/height/top/left.
+      function anchorWrapper(anchorIndex, fn) {
+        return function (eventData, transform, x, y) {
+          var fabricObject = transform.target,
+            absolutePoint = fabric.util.transformPoint({
+              x: (fabricObject.points[anchorIndex].x - fabricObject.pathOffset.x),
+              y: (fabricObject.points[anchorIndex].y - fabricObject.pathOffset.y),
+            }, fabricObject.calcTransformMatrix()),
+            actionPerformed = fn(eventData, transform, x, y),
+            newDim = fabricObject._setPositionDimensions({}),
+            polygonBaseSize = getObjectSizeWithStroke(fabricObject),
+            newX = (fabricObject.points[anchorIndex].x - fabricObject.pathOffset.x) / polygonBaseSize.x,
+            newY = (fabricObject.points[anchorIndex].y - fabricObject.pathOffset.y) / polygonBaseSize.y;
+          fabricObject.setPositionByOrigin(absolutePoint, newX + 0.5, newY + 0.5);
+          return actionPerformed;
+        }
+      }
+    },
+    oneditsave: function () {
+      this.regionsJson = JSON.stringify(collate(this.canvas, this.width, this.height, 'polygon'));
+      var textAreaRegionsJson = document.getElementById("node-input-regionsJson");
+      textAreaRegionsJson.value = this.regionsJson;
+
+      this.tripwiresJson = JSON.stringify(collate(this.canvas, this.width, this.height, 'group'));
+      var textAreaTripwiresJson = document.getElementById("node-input-tripwiresJson");
+      textAreaTripwiresJson.value = this.tripwiresJson;
+
+      this.canvas = null;
+    },
+    oneditcancel: function () {
+      this.canvas = null;
+    }
+  });
 </script>
