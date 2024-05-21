@@ -14,10 +14,16 @@ module.exports = function (RED) {
 
     function getImageFromMsg(msg) {
       if (node.imagePropType === 'msg') {
+        console.log("node.imageProp");
+        console.log(node.imageProp);
         return msg[node.imageProp];
       } else if (node.imagePropType === 'msgPayload') {
+        console.log("msg.payload[node.imageProp]");
+        console.log(msg.payload[node.imageProp]);
         return msg.payload[node.imageProp];
       } else {
+        console.log("msg.payload.event[node.imageProp]");
+        console.log(msg.payload.event[node.imageProp]);
         return msg.payload.event[node.imageProp];
       }
     }
@@ -25,10 +31,22 @@ module.exports = function (RED) {
     function validateImageFormat(data) {
       //if image is base64, convert it to a buffer
       let isString = typeof data === 'string';
+      console.log("isString");
+      console.log(isString);
+
+      console.log("data");
+      console.log(data);
+
+
       let hasMime = false, isBase64Image = false
       if (isString) {
         hasMime = data.startsWith("data:");
+        console.log("hasMime");
+        console.log(hasMime);
+
         isBase64Image = isBase64(data, {mimeRequired: hasMime});
+        console.log("isBase64Image");
+        console.log(isBase64Image);
       }
       if (isString && isBase64Image) {
         return true;
@@ -52,6 +70,12 @@ module.exports = function (RED) {
 
     this.on("input", function (msg, send, done) {
       let image = getImageFromMsg(msg);
+      console.log("image");
+      console.log(image);
+
+      console.log("validateImageFormat(image)");
+      console.log(validateImageFormat(image));
+
       if (image && validateImageFormat(image)) {
         sendDataToClient(image, msg);
         if (node.imagePropType === 'msg') {
