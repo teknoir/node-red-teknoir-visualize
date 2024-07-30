@@ -14,12 +14,17 @@ module.exports = function (RED) {
 
     function getImageFromMsg(msg) {
       if (node.imagePropType === 'msg') {
-        return msg[node.imageProp];
+        return getNestedProperty(msg, node.imageProp);
       } else if (node.imagePropType === 'msgPayload') {
-        return msg.payload[node.imageProp];
+        return getNestedProperty(msg.payload, node.imageProp);
       } else {
-        return msg.payload.event[node.imageProp];
+        return getNestedProperty(msg.payload.event, node.imageProp);
       }
+    }
+
+    // Utility function to get nested property
+    function getNestedProperty(obj, path) {
+      return path.split('.').reduce((acc, part) => acc && acc[part], obj);
     }
 
     function validateImageFormat(data) {
