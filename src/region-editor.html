@@ -410,6 +410,45 @@
           }).setCoords();
           this.renderAll();
         }
+
+        // constrain the active object within the canvas
+        var activeObject = this.getActiveObject();
+        if (activeObject && (activeObject.type === 'polygon' || activeObject.type === 'group')) {
+          var bound = activeObject.getBoundingRect(true, true);
+          var zoom = this.getZoom();
+
+          var canvasWidth = this.width;
+          var canvasHeight = this.height;
+
+          var newLeft = activeObject.left;
+          var newTop = activeObject.top;
+
+          // Check left edge
+          if (bound.left < 0) {
+            newLeft = 0;
+          }
+          // Check right edge
+          if (bound.left + bound.width > canvasWidth) {
+            newLeft = canvasWidth - bound.width;
+          }
+          // Check top edge
+          if (bound.top < 0) {
+            newTop = 0;
+          }
+          // Check bottom edge
+          if (bound.top + bound.height > canvasHeight) {
+            newTop = canvasHeight - bound.height;
+          }
+
+          if (newLeft !== activeObject.left || newTop !== activeObject.top) {
+            activeObject.set({
+              left: newLeft,
+              top: newTop
+            });
+            activeObject.setCoords();
+            this.requestRenderAll();
+          }
+        }
       });
 
       canvas.on('mouse:wheel', function (opt) {
