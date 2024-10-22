@@ -52,8 +52,12 @@
         </div>
     </div>
     <div className="form-row">
-        <label htmlFor="node-input-regionsJson"><i class="fa fa-tag"></i> Regions JSON</label>
-        <textarea id="node-input-regionsJson" style="width:800px" placeholder="[]" readonly></textarea>
+        <label htmlFor="node-input-inclusionZonesJson"><i class="fa fa-tag"></i> Inclusion Zones JSON</label>
+        <textarea id="node-input-inclusionZonesJson" style="width:800px" placeholder="[]" readonly></textarea>
+    </div>
+    <div className="form-row"></div>
+        <label htmlFor="node-input-exclusionZonesJson"><i class="fa fa-tag"></i> Exclusion Zones JSON</label>
+        <textarea id="node-input-exclusionZonesJson" style="width:800px" placeholder="[]" readonly></textarea>
     </div>
     <div className="form-row">
         <label htmlFor="node-input-tripwiresJson"><i class="fa fa-tag"></i> Tripwires JSON</label>
@@ -131,8 +135,13 @@
     };
   }
 
-  function collate(canvas, width, height, type) {
-    let objects = canvas.getObjects().filter(obj => obj.type === type);
+  function collate(canvas, width, height, type, isExclusion = null) {
+    let objects;
+    if (type === 'polygon') {
+      objects = canvas.getObjects().filter(obj => obj.type === type && obj.isExclusionZone === isExclusion);
+    } else {
+      objects = canvas.getObjects().filter(obj => obj.type === type);
+    }
     let objectsCount = objects.length;
     let polygons = [];
     for (var i = 0; i < objectsCount; i++) {
@@ -156,15 +165,27 @@
 
     let relativePolygons = [];
     for (let i = 0; i < polygons.length; i++) {
-      let polygon = polygons[i]
+      let polygon = polygons[i];
       let relativePolygon = [];
-      for (let i = 0; i < polygon.length; i++) {
-        relativePolygon.push(toRelative(polygon[i], width, height));
+      for (let j = 0; j < polygon.length; j++) {
+        relativePolygon.push(toRelative(polygon[j], width, height));
       }
       relativePolygons.push(relativePolygon);
     }
 
     return relativePolygons;
+  }
+
+  function collateInclusionZones(canvas, width, height) {
+    return collate(canvas, width, height, 'polygon', false);
+  }
+
+  function collateExclusionZones(canvas, width, height) {
+    return collate(canvas, width, height, 'polygon', true);
+  }
+
+  function collateTripwires(canvas, width, height) {
+    return collate(canvas, width, height, 'group');
   }
 
   function transformPoints(polygon, matrix) {
@@ -202,7 +223,8 @@
     defaults: {
       name: {value: ''},
       json: {value: '[]', required: true},
-      regionsJson: {value: '[]', required: true},
+      inclusionZonesJson: {value: '[]', required: true},
+      exclusionZonesJson: {value: '[]', required: true},
       tripwiresJson: {value: '[]', required: true},
       background: {value: null, required: false},
       imageProp: {value: 'image', required: false},
@@ -238,7 +260,8 @@
 // canvas Drawing
       var node = this;
       var background = node.background || 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAIAQMAAAD+wSzIAAAABlBMVEX///+/v7+jQ3Y5AAAADklEQVQI12P4AIX8EAgALgAD/aNpbtEAAAAASUVORK5CYII';
-      var regionsJson = node.regionsJson || '[]';
+      var inclusionZonesJson = node.inclusionZonesJson || '[]';
+      var exclusionZonesJson = node.exclusionZonesJson || '[]';
       var tripwiresJson = node.tripwiresJson || '[]';
       var polygonPoints = [];
       var lines = [];
@@ -263,14 +286,24 @@
         canvas.setDimensions({width: width, height: height});
         canvas.setBackgroundImage(background, canvas.renderAll.bind(canvas));
 
-        let regions = JSON.parse(regionsJson);
-        for (let i = 0, len = regions.length; i < len; i++) {
-          let relativePolygon = regions[i];
+        let inclusionZones = JSON.parse(inclusionZonesJson);
+        for (let i = 0, len = inclusionZones.length; i < len; i++) {
+          let relativePolygon = inclusionZones[i];
           let polygon = [];
           for (let j = 0; j < relativePolygon.length; j++) {
             polygon.push(fromRelative(relativePolygon[j], width, height));
           }
-          canvas.add(makePolygon(polygon));
+          canvas.add(makePolygon(polygon, false));
+        }
+
+        let exclusionZones = JSON.parse(exclusionZonesJson);
+        for (let i = 0, len = exclusionZones.length; i < len; i++) {
+          let relativePolygon = exclusionZones[i];
+          let polygon = [];
+          for (let j = 0; j < relativePolygon.length; j++) {
+            polygon.push(fromRelative(relativePolygon[j], width, height));
+          }
+          canvas.add(makePolygon(polygon, true));
         }
 
         let tripwires = JSON.parse(tripwiresJson);
@@ -489,9 +522,9 @@
           isDrawingTripWire = false;
           canvas.add(makeTripwire(polygonPoints));
         } else if (isDrawingExclusionZone || isDrawingInclusionZone) {
+          canvas.add(makePolygon(polygonPoints, isDrawingExclusionZone)).renderAll();
           isDrawingExclusionZone = false;
           isDrawingInclusionZone = false;
-          canvas.add(makePolygon(polygonPoints)).renderAll();
         }
 
         canvas.selection = true;
@@ -610,19 +643,21 @@
         });
       }
 
-      function makePolygon(polygonPoints) {
-
+      function makePolygon(polygonPoints, isExclusion) {
         var left = fabric.util.array.min(polygonPoints, "x");
         var top = fabric.util.array.min(polygonPoints, "y");
 
         polygonPoints.push(new fabric.Point(polygonPoints[0].x, polygonPoints[0].y));
 
+        var fillColor = isExclusion ? 'rgba(255,0,0,0.5)' : 'rgba(0,255,0,0.5)';
+
         return new fabric.Polygon(polygonPoints.slice(), {
           left: left,
           top: top,
           objectCaching: false,
-          fill: 'rgba(255,0,0,.5)',
-          stroke: 'black'
+          fill: fillColor,
+          stroke: 'black',
+          isExclusionZone: isExclusion // custom property to determine if this is an exclusion zone
         });
       }
 
@@ -691,9 +726,13 @@
       }
     },
     oneditsave: function () {
-      this.regionsJson = JSON.stringify(collate(this.canvas, this.width, this.height, 'polygon'));
-      var textAreaRegionsJson = document.getElementById("node-input-regionsJson");
-      textAreaRegionsJson.value = this.regionsJson;
+      this.inclusionZonesJson = JSON.stringify(collateInclusionZones(this.canvas, this.width, this.height));
+      var textAreaInclusionZonesJson = document.getElementById("node-input-inclusionZonesJson");
+      textAreaInclusionZonesJson.value = this.inclusionZonesJson;
+
+      this.exclusionZonesJson = JSON.stringify(collateExclusionZones(this.canvas, this.width, this.height));
+      var textAreaExclusionZonesJson = document.getElementById("node-input-exclusionZonesJson");
+      textAreaExclusionZonesJson.value = this.exclusionZonesJson;
 
       this.tripwiresJson = JSON.stringify(collate(this.canvas, this.width, this.height, 'group'));
       var textAreaTripwiresJson = document.getElementById("node-input-tripwiresJson");
@@ -706,3 +745,5 @@
     }
   });
 </script>
+
+

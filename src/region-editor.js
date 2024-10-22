@@ -6,7 +6,8 @@ module.exports = function (RED) {
     RED.nodes.createNode(this, config);
     let node = this;
 
-    node.regionsJson = config.regionsJson;
+    node.inclusionZonesJson = config.inclusionZonesJson;
+    node.exclusionZonesJson = config.exclusionZonesJson;
     node.tripwiresJson = config.tripwiresJson;
     node.imageProp = config.imageProp;
     node.imagePropType = config.imagePropType;
@@ -60,10 +61,12 @@ module.exports = function (RED) {
       if (image && validateImageFormat(image)) {
         sendDataToClient(image, msg);
         if (node.imagePropType === 'msg') {
-          msg['regions'] = JSON.parse(node.regionsJson);
+          msg['inclusionZones'] = JSON.parse(node.inclusionZonesJson);
+          msg['exclusionZones'] = JSON.parse(node.exclusionZonesJson);
           msg['tripwires'] = JSON.parse(node.tripwiresJson);
         } else {
-          msg.payload['regions'] = JSON.parse(node.regionsJson);
+          msg.payload['inclusionZones'] = JSON.parse(node.inclusionZonesJson);
+          msg.payload['exclusionZones'] = JSON.parse(node.exclusionZonesJson);
           msg.payload['tripwires'] = JSON.parse(node.tripwiresJson);
         }
       } else {
