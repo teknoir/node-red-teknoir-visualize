@@ -20,9 +20,12 @@
     <div className="form-row">
         <label htmlFor="node-canvas"><i class="fa fa-tag"></i> Canvas</label>
         <ul id="node-canvas" style="display:inline-block">
-            <li id="add" class="red-ui-typedInput-container"
+            <li id="add-inclusion-zone" class="red-ui-typedInput-container"
                 style="display:inline-block;padding:5px 10px;margin-right:-1px;cursor:pointer"><i
-                    class="fa fa-area-chart" title="New poly"></i>
+                    class="fa fa-check-circle" title="New Inclusion Zone"></i>
+            <li id="add-exclusion-zone" class="red-ui-typedInput-container"
+                style="display:inline-block;padding:5px 10px;margin-right:-1px;cursor:pointer"><i
+                    class="fa fa-ban" title="New Exclusion Zone"></i>
             <li id="add-tripwire" class="red-ui-typedInput-container"
                 style="display:inline-block;padding:5px 10px;margin-right:-1px;cursor:pointer"><i
                     class="fa fa-arrow-right " title="New tripwire"></i>
@@ -49,8 +52,12 @@
         </div>
     </div>
     <div className="form-row">
-        <label htmlFor="node-input-regionsJson"><i class="fa fa-tag"></i> Regions JSON</label>
-        <textarea id="node-input-regionsJson" style="width:800px" placeholder="[]" readonly></textarea>
+        <label htmlFor="node-input-inclusionZonesJson"><i class="fa fa-tag"></i> Inclusion Zones JSON</label>
+        <textarea id="node-input-inclusionZonesJson" style="width:800px" placeholder="[]" readonly></textarea>
+    </div>
+    <div className="form-row"></div>
+        <label htmlFor="node-input-exclusionZonesJson"><i class="fa fa-tag"></i> Exclusion Zones JSON</label>
+        <textarea id="node-input-exclusionZonesJson" style="width:800px" placeholder="[]" readonly></textarea>
     </div>
     <div className="form-row">
         <label htmlFor="node-input-tripwiresJson"><i class="fa fa-tag"></i> Tripwires JSON</label>
@@ -128,8 +135,13 @@
     };
   }
 
-  function collate(canvas, width, height, type) {
-    let objects = canvas.getObjects().filter(obj => obj.type === type);
+  function collate(canvas, width, height, type, isExclusion = null) {
+    let objects;
+    if (type === 'polygon') {
+      objects = canvas.getObjects().filter(obj => obj.type === type && obj.isExclusionZone === isExclusion);
+    } else {
+      objects = canvas.getObjects().filter(obj => obj.type === type);
+    }
     let objectsCount = objects.length;
     let polygons = [];
     for (var i = 0; i < objectsCount; i++) {
@@ -153,15 +165,27 @@
 
     let relativePolygons = [];
     for (let i = 0; i < polygons.length; i++) {
-      let polygon = polygons[i]
+      let polygon = polygons[i];
       let relativePolygon = [];
-      for (let i = 0; i < polygon.length; i++) {
-        relativePolygon.push(toRelative(polygon[i], width, height));
+      for (let j = 0; j < polygon.length; j++) {
+        relativePolygon.push(toRelative(polygon[j], width, height));
       }
       relativePolygons.push(relativePolygon);
     }
 
     return relativePolygons;
+  }
+
+  function collateInclusionZones(canvas, width, height) {
+    return collate(canvas, width, height, 'polygon', false);
+  }
+
+  function collateExclusionZones(canvas, width, height) {
+    return collate(canvas, width, height, 'polygon', true);
+  }
+
+  function collateTripwires(canvas, width, height) {
+    return collate(canvas, width, height, 'group');
   }
 
   function transformPoints(polygon, matrix) {
@@ -199,7 +223,8 @@
     defaults: {
       name: {value: ''},
       json: {value: '[]', required: true},
-      regionsJson: {value: '[]', required: true},
+      inclusionZonesJson: {value: '[]', required: true},
+      exclusionZonesJson: {value: '[]', required: true},
       tripwiresJson: {value: '[]', required: true},
       background: {value: null, required: false},
       imageProp: {value: 'image', required: false},
@@ -235,11 +260,13 @@
 // canvas Drawing
       var node = this;
       var background = node.background || 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAIAQMAAAD+wSzIAAAABlBMVEX///+/v7+jQ3Y5AAAADklEQVQI12P4AIX8EAgALgAD/aNpbtEAAAAASUVORK5CYII';
-      var regionsJson = node.regionsJson || '[]';
+      var inclusionZonesJson = node.inclusionZonesJson || '[]';
+      var exclusionZonesJson = node.exclusionZonesJson || '[]';
       var tripwiresJson = node.tripwiresJson || '[]';
       var polygonPoints = [];
       var lines = [];
-      var isDrawing = false;
+      var isDrawingExclusionZone = false;
+      var isDrawingInclusionZone = false;
       var isDrawingTripWire = false;
       if (!node.canvas) {
         node.canvas = new fabric.Canvas('polyCanvas')
@@ -259,14 +286,24 @@
         canvas.setDimensions({width: width, height: height});
         canvas.setBackgroundImage(background, canvas.renderAll.bind(canvas));
 
-        let regions = JSON.parse(regionsJson);
-        for (let i = 0, len = regions.length; i < len; i++) {
-          let relativePolygon = regions[i];
+        let inclusionZones = JSON.parse(inclusionZonesJson);
+        for (let i = 0, len = inclusionZones.length; i < len; i++) {
+          let relativePolygon = inclusionZones[i];
           let polygon = [];
           for (let j = 0; j < relativePolygon.length; j++) {
             polygon.push(fromRelative(relativePolygon[j], width, height));
           }
-          canvas.add(makePolygon(polygon));
+          canvas.add(makePolygon(polygon, false));
+        }
+
+        let exclusionZones = JSON.parse(exclusionZonesJson);
+        for (let i = 0, len = exclusionZones.length; i < len; i++) {
+          let relativePolygon = exclusionZones[i];
+          let polygon = [];
+          for (let j = 0; j < relativePolygon.length; j++) {
+            polygon.push(fromRelative(relativePolygon[j], width, height));
+          }
+          canvas.add(makePolygon(polygon, true));
         }
 
         let tripwires = JSON.parse(tripwiresJson);
@@ -280,11 +317,19 @@
         }
       }
 
-      document.getElementById("add").onclick = function () {
-        if (isDrawing) {
+      document.getElementById("add-inclusion-zone").onclick = function () {
+        if (isDrawingInclusionZone) {
           finalize();
         } else {
-          isDrawing = true;
+          isDrawingInclusionZone = true;
+        }
+      };
+      
+      document.getElementById("add-exclusion-zone").onclick = function () {
+        if (isDrawingExclusionZone) {
+          finalize();
+        } else {
+          isDrawingExclusionZone = true;
         }
       };
 
@@ -294,8 +339,9 @@
         } else {
           isDrawingTripWire = true;
 
-          // reset the polygon drawing state
-          isDrawing = false;
+          // reset the inclusion/exclusion drawing state
+          isDrawingInclusionZone = false;
+          isDrawingExclusionZone = false;
           polygonPoints.length = 0;
           lines.length = 0;
         }
@@ -341,13 +387,13 @@
       };
 
       fabric.util.addListener(window, "dblclick", function () {
-        if (isDrawing) {
+        if (isDrawingExclusionZone || isDrawingInclusionZone) {
           finalize();
         }
       });
 
       fabric.util.addListener(window, "keyup", function (evt) {
-        if (evt.which === 13 && isDrawing) {
+        if (evt.which === 13 && (isDrawingExclusionZone || isDrawingInclusionZone)) {
           finalize();
         }
       });
@@ -359,14 +405,20 @@
           this.lastPosX = evt.e.clientX;
           this.lastPosY = evt.e.clientY;
         }
-        if (isDrawing || isDrawingTripWire) {
+        if (isDrawingExclusionZone || isDrawingInclusionZone || isDrawingTripWire) {
           var _mouse = this.getPointer(evt.e);
           var _x = _mouse.x;
           var _y = _mouse.y;
+
+          // tripwire - yellow
+          // exclusion zone - red
+          // inclusion zone - green
+          var color = isDrawingExclusionZone ? 'red' : (isDrawingInclusionZone ? 'green' : 'yellow');
+
           var line = new fabric.Line([_x, _y, _x, _y], {
             strokeWidth: 1,
             selectable: false,
-            stroke: isDrawing ? 'red' : 'green'
+            stroke: color
           });
 
           polygonPoints.push(new fabric.Point(_x, _y));
@@ -402,13 +454,52 @@
           this.lastPosX = e.clientX;
           this.lastPosY = e.clientY;
         }
-        if (lines.length && (isDrawing || isDrawingTripWire)) {
+        if (lines.length && (isDrawingExclusionZone || isDrawingInclusionZone || isDrawingTripWire)) {
           var _mouse = this.getPointer(evt.e);
           lines[lines.length - 1].set({
             x2: _mouse.x,
             y2: _mouse.y
           }).setCoords();
           this.renderAll();
+        }
+
+        // constrain the active object within the canvas
+        var activeObject = this.getActiveObject();
+        if (activeObject && (activeObject.type === 'polygon' || activeObject.type === 'group')) {
+          var bound = activeObject.getBoundingRect(true, true);
+          var zoom = this.getZoom();
+
+          var canvasWidth = this.width;
+          var canvasHeight = this.height;
+
+          var newLeft = activeObject.left;
+          var newTop = activeObject.top;
+
+          // Check left edge
+          if (bound.left < 0) {
+            newLeft = 0;
+          }
+          // Check right edge
+          if (bound.left + bound.width > canvasWidth) {
+            newLeft = canvasWidth - bound.width;
+          }
+          // Check top edge
+          if (bound.top < 0) {
+            newTop = 0;
+          }
+          // Check bottom edge
+          if (bound.top + bound.height > canvasHeight) {
+            newTop = canvasHeight - bound.height;
+          }
+
+          if (newLeft !== activeObject.left || newTop !== activeObject.top) {
+            activeObject.set({
+              left: newLeft,
+              top: newTop
+            });
+            activeObject.setCoords();
+            this.requestRenderAll();
+          }
         }
       });
 
@@ -430,9 +521,10 @@
         if (isDrawingTripWire) {
           isDrawingTripWire = false;
           canvas.add(makeTripwire(polygonPoints));
-        } else if (isDrawing) {
-          isDrawing = false;
-          canvas.add(makePolygon(polygonPoints)).renderAll();
+        } else if (isDrawingExclusionZone || isDrawingInclusionZone) {
+          canvas.add(makePolygon(polygonPoints, isDrawingExclusionZone)).renderAll();
+          isDrawingExclusionZone = false;
+          isDrawingInclusionZone = false;
         }
 
         canvas.selection = true;
@@ -551,19 +643,21 @@
         });
       }
 
-      function makePolygon(polygonPoints) {
-
+      function makePolygon(polygonPoints, isExclusion) {
         var left = fabric.util.array.min(polygonPoints, "x");
         var top = fabric.util.array.min(polygonPoints, "y");
 
         polygonPoints.push(new fabric.Point(polygonPoints[0].x, polygonPoints[0].y));
 
+        var fillColor = isExclusion ? 'rgba(255,0,0,0.5)' : 'rgba(0,255,0,0.5)';
+
         return new fabric.Polygon(polygonPoints.slice(), {
           left: left,
           top: top,
           objectCaching: false,
-          fill: 'rgba(255,0,0,.5)',
-          stroke: 'black'
+          fill: fillColor,
+          stroke: 'black',
+          isExclusionZone: isExclusion // custom property to determine if this is an exclusion zone
         });
       }
 
@@ -632,9 +726,13 @@
       }
     },
     oneditsave: function () {
-      this.regionsJson = JSON.stringify(collate(this.canvas, this.width, this.height, 'polygon'));
-      var textAreaRegionsJson = document.getElementById("node-input-regionsJson");
-      textAreaRegionsJson.value = this.regionsJson;
+      this.inclusionZonesJson = JSON.stringify(collateInclusionZones(this.canvas, this.width, this.height));
+      var textAreaInclusionZonesJson = document.getElementById("node-input-inclusionZonesJson");
+      textAreaInclusionZonesJson.value = this.inclusionZonesJson;
+
+      this.exclusionZonesJson = JSON.stringify(collateExclusionZones(this.canvas, this.width, this.height));
+      var textAreaExclusionZonesJson = document.getElementById("node-input-exclusionZonesJson");
+      textAreaExclusionZonesJson.value = this.exclusionZonesJson;
 
       this.tripwiresJson = JSON.stringify(collate(this.canvas, this.width, this.height, 'group'));
       var textAreaTripwiresJson = document.getElementById("node-input-tripwiresJson");
@@ -647,3 +745,5 @@
     }
   });
 </script>
+
+
