@@ -28,7 +28,7 @@
   "homepage": "https://teknoir.ai",
   "dependencies": {
     "node-fetch": "3.2.10",
-    "uuid": "8.3.2",
+    "uuid": "14.0.0",
     "canvas": "2.11.2",
     "is-base64": "1.1.0"
   }
